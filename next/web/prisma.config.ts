@@ -1,6 +1,7 @@
-// web/prisma.config.ts
-import "dotenv/config"; // Обязательно для чтения переменных из .env в Node.js
 import { defineConfig } from '@prisma/config';
+
+// Считываем строку подключения напрямую из переменной окружения
+const databaseUrl = process.env.DATABASE_URL;
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -8,7 +9,8 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    // Явно указываем, откуда брать строку подключения
-    url: process.env.DATABASE_URL, 
+    // Если переменная пустая (например, при сборке), 
+    // подставляем заглушку, чтобы валидатор Prisma не выдавал ошибку
+    url: databaseUrl || "postgresql://mock:mock@localhost:5432/mock",
   },
 });
