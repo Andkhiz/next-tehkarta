@@ -76,7 +76,7 @@ docker-compose up -d --build
 ```bash
 cd ../next/web
 npm install dotenv
-npx prisma migrate dev --name init
+npx prisma migrate deploy
 ```
 
 * Веб-интерфейс: `http://localhost:3000`
