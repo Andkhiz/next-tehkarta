@@ -72,8 +72,10 @@ cd next-tehkarta/docker
 docker-compose up -d --build
 ```
 
-### 5. Создание объектов базы данных
+### 6. Создание объектов базы данных
 ```bash
+cd ../next/web
+npm install dotenv
 npx prisma migrate dev --name init
 ```
 
