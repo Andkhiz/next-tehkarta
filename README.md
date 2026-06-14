@@ -44,7 +44,7 @@ npx prisma studio
 ## Вариант 2. Быстрый запуск через стандартный терминал Windows
 
 ### 1. Требования
-* Установленный **Git** и запущенный **Docker Desktop**.
+* Установленный **Git**, **npm** и запущенный **Docker Desktop**.
 
 ### 2. Клонирование и настройка
 Откройте PowerShell / CMD и выполните:
@@ -77,7 +77,7 @@ docker-compose up -d --build
 cd ../next/web
 npm install dotenv
 npx prisma migrate deploy
-rm -rf node_modules
+Remove-Item -Recurse -Force node_modules
 ```
 
 * Веб-интерфейс: [`http://localhost:3000`](http://localhost:3000)
