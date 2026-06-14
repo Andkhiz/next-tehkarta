@@ -49,7 +49,7 @@ npx prisma studio
 ### 2. Клонирование и настройка
 Откройте PowerShell / CMD и выполните:
 ```bash
-git clone https://github.com
+git clone https://github.com/Andkhiz/next-tehkarta.git
 cd next-tehkarta
 ```
 
