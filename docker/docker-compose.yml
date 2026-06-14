@@ -19,7 +19,7 @@ services:
   # Веб-приложение Next.js
   web_app:
     build:
-      context: ./web
+      context: ../next/web
       dockerfile: Dockerfile
     container_name: nextjs_web_app
     restart: always
@@ -27,6 +27,6 @@ services:
       - "3000:3000"
     environment:
       # Строка подключения к БД внутри сети Docker
-      DATABASE_URL: postgres://myuser:mysecretpassword@postgres_db:5432/my_next_db
+      - DATABASE_URL=postgresql://myuser:mysecretpassword@postgres_db:5432/my_next_db?schema=public
     depends_on:
       - postgres_db
