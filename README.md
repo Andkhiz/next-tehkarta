@@ -64,14 +64,19 @@ Copy-Item ./next-tehkarta/next/web/env.example ./next-tehkarta/next/web/.env
 ### 4. Docker файл
 В PowerShell / CMD и выполните:
 ```bash
-cd docker
+cd next-tehkarta/docker
 ```
 
 ### 5. Старт проекта
 ```bash
 docker-compose up -d --build
-docker compose exec web_app npx prisma migrate deploy
 ```
+
+### 5. Создание объектов базы данных
+```bash
+npx prisma migrate dev --name init
+```
+
 * Веб-интерфейс: `http://localhost:3000`
 
 
