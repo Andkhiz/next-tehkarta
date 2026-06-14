@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Шапка технологической карты (ГОСТ 3.1118-82)
+model RouteCard {
+  id              Int         @id @default(autoincrement())
+  documentNumber  String      @unique @map("document_number")
+  partName        String      @map("part_name")       
+  material        String      
+  massKg          Float       @map("mass_kg")         
+  profileSize     String      @map("profile_size")    
+  operations      Operation[] 
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  @@map("route_cards")
+}
+
+// Операции процесса
+model Operation {
+  id              Int            @id @default(autoincrement())
+  routeCardId     Int            @map("route_card_id")
+  routeCard       RouteCard      @relation(fields: [routeCardId], references: [id], onDelete: Cascade)
+  
+  operationNumber String         @map("operation_number") 
+  operationName   String         @map("operation_name")   
+  workplace       String?        @map("workplace")        
+  equipment       String?        @map("equipment")        
+  
+  rows            OperationRow[] 
+  order           Int            
+
+  @@map("operations")
+}
+
+// Строки внутри операции (Переходы, оснастка)
+model OperationRow {
+  id          Int       @id @default(autoincrement())
+  operationId Int       @map("operation_id")
+  operation   Operation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+  
+  rowType     String    @map("row_type") 
+  text        String    
+  order       Int       
+
+  @@map("operation_rows")
+}

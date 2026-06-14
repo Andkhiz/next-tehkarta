@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # Сервер базы данных PostgreSQL
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: nextjs_postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: my_next_db
+    ports:
+      - "5432:5432"
+    volumes:
+      # Файлы БД будут сохраняться в папку postgres_data на жестком диске
+      - ./postgres_data:/var/lib/postgresql/data
+
+  # Веб-приложение Next.js
+  web_app:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: nextjs_web_app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Строка подключения к БД внутри сети Docker
+      DATABASE_URL: postgres://myuser:mysecretpassword@postgres_db:5432/my_next_db
+    depends_on:
+      - postgres_db
