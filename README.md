@@ -54,15 +54,21 @@ cd next-tehkarta
 ```
 
 ### 3. Файл окружения
-Создайте файл `web/.env` со строкой подключения:
+Создайте файл `next/web/.env` со строкой подключения:
 ```bash
 # Команда для PowerShell:
-Copy-Item ./web/.env.example ./web/.env
+Copy-Item ./next/web/env.example ./next/web/.env
 ```
-*Или создайте файл вручную и вставьте:*  
+*Или создайте файл вручную ./next/web/.env и вставьте:*  
 `DATABASE_URL="postgresql://myuser:mysecretpassword@localhost:5432/my_next_db?schema=public"`
 
-### 4. Старт проекта
+### 4. Docker файл
+В PowerShell / CMD и выполните:
+```bash
+cd docker
+```
+
+### 5. Старт проекта
 ```bash
 docker-compose up -d --build
 docker compose exec web_app npx prisma migrate deploy
