@@ -50,16 +50,15 @@ npx prisma studio
 Откройте PowerShell / CMD и выполните:
 ```bash
 git clone https://github.com/Andkhiz/next-tehkarta.git
-cd next-tehkarta
 ```
 
 ### 3. Файл окружения
 Создайте файл `next/web/.env` со строкой подключения:
 ```bash
 # Команда для PowerShell:
-Copy-Item ./next/web/env.example ./next/web/.env
+Copy-Item ./next-tehkarta/next/web/env.example ./next-tehkarta/next/web/.env
 ```
-*Или создайте файл вручную ./next/web/.env и вставьте:*  
+*Или создайте файл вручную ./next-tehkarta/next/web/.env и вставьте:*  
 `DATABASE_URL="postgresql://myuser:mysecretpassword@localhost:5432/my_next_db?schema=public"`
 
 ### 4. Docker файл
