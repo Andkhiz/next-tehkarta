@@ -13,4 +13,6 @@ npx prisma db push --url="postgresql://myuser:mysecretpassword@postgres_db:5432/
 
 # Запускаем сервер Next.js
 echo "Starting Next.js application..."
-exec npm run start
+# Вместо exec npm run start пишем:
+exec node server.js
+

@@ -1,46 +1,44 @@
-# Шаг 1: Установка зависимостей
+# === Шаг 1: Установка ВСЕХ зависимостей ===
 FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package*.json ./
-# Если папка prisma есть на этом этапе, копируем для корректной установки
-COPY prisma ./prisma/ 
+COPY prisma ./prisma/
 RUN npm ci
 
-# Шаг 2: Сборка приложения
+# === Шаг 2: Сборка приложения ===
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Генерируем клиент Prisma внутри Linux-окружения
 RUN npx prisma generate
-
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-# Шаг 3: Запуск готового production-сервера
+# === Шаг 3: Финальный минимальный образ ===
 FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-# Прописываем переменную на уровне самого Docker-образа:
-ENV DATABASE_URL="postgresql://myuser:mysecretpassword@postgres_db:5432/my_next_db?schema=public"
 
-# Устанавливаем netcat для проверки доступности порта БД
 RUN apk add --no-cache netcat-openbsd
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Копируем только статику и публичные файлы
 COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
+
+# Магия standalone: копируем только собранный минимальный сервер и зависимости
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Для работы скрипта нам всё ещё нужна схема Prisma
 COPY --from=builder /app/prisma ./prisma
 
-# Копируем и даем права на запуск скрипту инициализации
+# Копируем скрипт запуска
 COPY entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
