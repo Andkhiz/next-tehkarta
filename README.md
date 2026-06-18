@@ -72,14 +72,6 @@ cd next-tehkarta/docker
 docker-compose up -d --build
 ```
 
-### 6. Создание объектов базы данных
-```bash
-cd ../next/web
-npm install dotenv
-npx prisma migrate deploy
-Remove-Item -Recurse -Force node_modules
-```
-
 * Веб-интерфейс: [`http://localhost:3000`](http://localhost:3000)
 
 
