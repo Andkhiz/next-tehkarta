@@ -13,8 +13,33 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      # Файлы БД будут сохраняться в папку postgres_data на жестком диске
       - ./postgres_data:/var/lib/postgresql/data
+
+          # СЛУЖЕБНЫЙ КОНТЕЙНЕР ДЛЯ МИГРАЦИЙ
+  db_migrations:
+    image: node:22-alpine
+    container_name: nextjs_db_migrations
+    working_dir: /app
+    volumes:
+      # Пробрасываем папку prisma (схему и миграции)
+      - ../next/web/prisma:/app/prisma
+      # Монтируем чистый JavaScript-конфиг
+      - ./prisma.config.docker.js:/app/prisma.config.js
+    environment:
+      - DATABASE_URL=postgresql://myuser:mysecretpassword@postgres_db:5432/my_next_db?schema=public
+    command: >
+      sh -c "
+        echo 'Waiting for Postgres...' &&
+        while ! nc -z postgres_db 5432; do sleep 1; done &&
+        echo 'Installing Prisma CLI 7.8.0...' &&
+        npm install -g prisma@7.8.0 &&
+        echo 'Postgres is up! Running migrate deploy...' &&
+        prisma migrate deploy
+      "
+    depends_on:
+      - postgres_db
+
+
 
   # Веб-приложение Next.js
   web_app:
@@ -26,7 +51,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Строка подключения к БД внутри сети Docker
       - DATABASE_URL=postgresql://myuser:mysecretpassword@postgres_db:5432/my_next_db?schema=public
     depends_on:
-      - postgres_db
+      postgres_db:
+        condition: service_started
+      db_migrations:
+        condition: service_completed_successfully
