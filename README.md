@@ -58,6 +58,13 @@ git clone https://github.com/Andkhiz/next-tehkarta.git
 # Команда для PowerShell:
 Copy-Item ./next-tehkarta/next/web/env.example ./next-tehkarta/next/web/.env
 ```
+
+```bash
+# Команда для Git Bash:
+cp ./next-tehkarta/next/web/env.example ./next-tehkarta/next/web/.env
+```
+
+
 *Или создайте файл вручную ./next-tehkarta/next/web/.env и вставьте:*  
 `DATABASE_URL="postgresql://myuser:mysecretpassword@localhost:5432/my_next_db?schema=public"`
 
@@ -81,18 +88,35 @@ docker-compose up -d --build
 
 Данные технологических карт надежно хранятся на жестком диске удаленного компьютера в изолированной папке `postgres_data`. При обновлении кода через Git все сохраненные карты **полностью сохраняются**.
 
-### Шаг 1. Скачивание обновлений
+### Шаг 1. Отмена всех несохраненных обновлений
+git reset --hard HEAD
+
+
+### Шаг 2. Скачивание обновлений
 Откройте терминал в корневой папке проекта на удаленном компьютере и подтяните свежую версию кода и сгенерированных SQL-миграций из репозитория:
 ```bash
 git pull origin main
 ```
 *Git обновит файлы интерфейса и папки миграций, не затрагивая локальную папку с базой данных.*
 
-### Шаг 2. Автоматический перезапуск и применение изменений в Docker
+### Шаг 3. Создайте файла `next/web/.env` со строкой подключения:
+```bash
+# Команда для PowerShell:
+Copy-Item ./next-tehkarta/next/web/env.example ./next-tehkarta/next/web/.env
+```
+
+```bash
+# Команда для Git Bash:
+cp ./next-tehkarta/next/web/env.example ./next-tehkarta/next/web/.env
+```
+
+### Шаг 4. Автоматический перезапуск и применение изменений в Docker
 Перейдите в папку конфигурации Docker и запустите процесс обновления системы одной командой:
 ```bash
 cd docker
-docker-compose up -d --build
+docker compose down -v
+docker compose build --no-cache
+docker compose up -d
 ```
 
 ### ⚙️ Как это работает под капотом:
