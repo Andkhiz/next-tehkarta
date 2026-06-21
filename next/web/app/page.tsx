@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link';
 
 interface OperationRow { type: string; text: string }
 interface Operation {
@@ -144,9 +145,32 @@ export default function Home() {
       <div className="flex-1 p-8 overflow-y-auto max-h-screen">
         <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md border border-gray-200">
           
-          <h1 className="text-xl font-bold mb-6 text-center text-gray-800">
-            Технологическая карта (ГОСТ 3.1118-82)
-          </h1>
+          {/* Контейнер с относительным позиционированием для разжатия заголовка */}
+          <div className="relative flex items-center justify-center w-full mb-6">
+            
+            {/* Ваше название без изменений — теперь оно занимает всю ширину и не сжимается */}
+            <h1 className="text-xl font-bold text-center text-gray-800">
+              Технологическая карта (ГОСТ 3.1118-82)
+            </h1>
+
+            {/* Кнопка намертво прижимается к правому краю, не мешая заголовку */}
+            <div className="absolute right-0">
+              {/* Ваша кнопка без единого изменения в коде */}
+              <Link 
+                href={`/reports/${selectedCardId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold px-4 py-1.5 rounded transition shadow-sm cursor-pointer"
+              >
+                <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.8A8.004 8.004 0 0112 4.5c4.14 0 7.5 3.36 7.5 7.5a7.94 7.94 0 01-1.464 4.542m-12.072 0H19.5" />
+                </svg>
+                Печать
+              </Link>
+            </div>
+          </div>
+
+
 
           <form onSubmit={handleSubmit} className="space-y-6">
             
@@ -185,21 +209,24 @@ export default function Home() {
               </div>
 
               {operations.map((op, opIdx) => (
-                <div key={opIdx} className="border border-gray-200 p-4 rounded space-y-3 bg-white shadow-sm relative">
-                  
-                  {/* КНОПКА УДАЛЕНИЯ ОПЕРАЦИИ */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const updated = operations.filter((_, i) => i !== opIdx)
-                      setOperations(updated)
-                    }}
-                    className="absolute top-3 right-3 text-gray-400 hover:text-red-600 text-xs font-semibold border border-transparent hover:border-red-200 hover:bg-red-50 px-2 py-0.5 rounded transition"
-                    title="Удалить операцию полностью"
-                  >
-                    Удалить операцию ×
-                  </button>
-
+                <div key={opIdx} className="border border-gray-200 px-4 rounded space-y-3 bg-white shadow-sm relative">
+                  <div className="flex justify-between items-center w-full">
+                    <button type="button" onClick={addOperation} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 my-2 rounded transition">
+                      + Добавить операцию
+                    </button>
+                    {/* КНОПКА УДАЛЕНИЯ ОПЕРАЦИИ */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = operations.filter((_, i) => i !== opIdx)
+                        setOperations(updated)
+                      }}
+                      className=" top-3 right-3 text-gray-400 hover:text-red-600 text-xs font-semibold border border-transparent hover:border-red-200 hover:bg-red-50 px-2 py-0.5 rounded transition"
+                      title="Удалить операцию полностью"
+                    >
+                      Удалить операцию ×
+                    </button>
+                  </div>
                   <div className="grid grid-cols-4 gap-2 pt-4">
                     <div>
                       <label className="block text-xs text-gray-400">№ Оп.</label>
