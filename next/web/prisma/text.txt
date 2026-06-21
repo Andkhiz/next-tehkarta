@@ -1,0 +1,9 @@
+Редактируете схему: Открываете файл prisma/schema.prisma и дописываете поле:prismamodel RouteCard {
+  id          Int    @id @default(autoincrement())
+  name        String
+  description String? // <--- Добавили новое поле (с вопросительным знаком, чтобы оно было необязательным)
+}
+Используйте код с осторожностью.Генерируете миграцию: Открываете терминал в папке проекта на своем компьютере и запускаете команду:
+bash
+
+npx prisma migrate dev --name add_description_to_route_card
