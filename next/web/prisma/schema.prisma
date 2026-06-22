@@ -36,10 +36,59 @@ model Operation {
   workplace       String?        @map("workplace")        
   equipment       String?        @map("equipment")        
   
+  nv              Float?         @map("time_standard") // норма времени
+  cuttingTools    OperationCuttingTool[]               // Режущий инструмент
+  measuringTools  OperationMeasuringTool[]             // Мерительный инструмент
+
   rows            OperationRow[] 
   order           Int            
 
   @@map("operations")
+}
+
+
+// Справочник: Режущий инструмент
+model CuttingToolCatalog {
+  id          Int                    @id @default(autoincrement())
+  name        String                 @unique // Название или артикул инструмента
+  description String?
+  operations  OperationCuttingTool[]
+
+  @@map("cutting_tool_catalog")
+}
+
+// Справочник: Мерительный инструмент
+model MeasuringToolCatalog {
+  id          Int                      @id @default(autoincrement())
+  name        String                   @unique
+  description String?
+  operations  OperationMeasuringTool[]
+
+  @@map("measuring_tool_catalog")
+}
+
+// Промежуточная таблица: Операции <-> Режущие инструменты
+model OperationCuttingTool {
+  operationId   Int         @map("operation_id")
+  cuttingToolId Int         @map("cutting_tool_id")
+  
+  operation     Operation   @relation(fields: [operationId], references: [id], onDelete: Cascade)
+  cuttingTool   CuttingToolCatalog @relation(fields: [cuttingToolId], references: [id], onDelete: Cascade)
+
+  @@id([operationId, cuttingToolId])
+  @@map("operation_cutting_tools")
+}
+
+// Промежуточная таблица: Операции <-> Мерительные инструменты
+model OperationMeasuringTool {
+  operationId     Int           @map("operation_id")
+  measuringToolId Int           @map("measuring_tool_id")
+  
+  operation       Operation     @relation(fields: [operationId], references: [id], onDelete: Cascade)
+  measuringTool   MeasuringToolCatalog @relation(fields: [measuringToolId], references: [id], onDelete: Cascade)
+
+  @@id([operationId, measuringToolId])
+  @@map("operation_measuring_tools")
 }
 
 // Строки внутри операции (Переходы, оснастка)
