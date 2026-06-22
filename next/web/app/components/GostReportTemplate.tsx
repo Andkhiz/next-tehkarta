@@ -39,6 +39,7 @@ export interface ReportOperation {
   operationName: string;
   workplace: string;
   equipment: string;
+  nv?: number | null; // НОВОЕ ПОЛЕ: Норма времени из БД (число или null)
   order: number;
   rows: ReportRow[];
 }
@@ -571,7 +572,7 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
             <View style={[styles.processCell, { width: cm(1.01) }]}><Text></Text></View>
             <View style={[styles.processCell, { width: cm(2.36) }]}><Text></Text></View>
             <View style={[styles.processCell, { width: cm(2.04) }]}><Text></Text></View>
-            <View style={[styles.processCell, { width: cm(1.4) }]}><Text></Text></View>
+            <View style={[styles.processCell, { width: cm(1.4), fontSize: 10 }]}><Text>{operation.nv || ''}</Text></View>
           </View>
         );
       })()}

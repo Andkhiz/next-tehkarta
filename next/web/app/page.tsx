@@ -1,18 +1,44 @@
-// web/app/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link';
 
-interface OperationRow { type: string; text: string }
+// 1. Полные интерфейсы для типизации с учетом новых полей и таблиц-справочников
+interface OperationRow { 
+  type: string; 
+  text: string 
+}
+
+interface ToolRelation { 
+  id?: number; 
+  cuttingToolId?: number; 
+  measuringToolId?: number; 
+  cuttingTool?: { name: string }; 
+  measuringTool?: { name: string };
+  name?: string; // Для временного хранения ручного ввода до сохранения
+}
+
 interface Operation {
   operation_number: string
   operation_name: string
   workplace: string
   equipment: string
+  nv: string // На фронтенде храним строкой для удобства работы <input type="number">
+  cuttingTools: ToolRelation[]
+  measuringTools: ToolRelation[]
   rows: OperationRow[]
 }
-interface CardListItem { id: number; documentNumber: string; partName: string }
+
+interface CardListItem { 
+  id: number; 
+  documentNumber: string; 
+  partName: string 
+}
+
+interface ToolCatalogItem { 
+  id: number; 
+  name: string 
+}
 
 export default function Home() {
   // Состояния для перечня документов и фильтра
@@ -20,27 +46,45 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null)
 
-  // Состояния для полей формы технологической карты
+  // Справочник режущего инструмента (подгружается автоматически с сервера)
+  const [cuttingCatalog, setCuttingCatalog] = useState<ToolCatalogItem[]>([])
+
+  // Состояния для полей формы технологической карты (Шапка)
   const [docNumber, setDocNumber] = useState('')
   const [partName, setPartName] = useState('')
   const [material, setMaterial] = useState('')
   const [mass, setMass] = useState('')
   const [profileSize, setProfileSize] = useState('')
+  
+  // Массив операций
   const [operations, setOperations] = useState<Operation[]>([])
 
   const [loading, setLoading] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
 
-  // 1. Загрузка перечня документов с бэкенда
+  // Загрузка каталога режущих инструментов для выпадающего списка
+  async function loadCuttingCatalog() {
+    try {
+      const res = await fetch('/api/tools/cutting')
+      const result = await res.json()
+      if (result.success) setCuttingCatalog(result.data)
+    } catch (err) { 
+      console.error('Ошибка загрузки справочника режущих инструментов:', err) 
+    }
+  }
+
+  // Загрузка архива (краткого списка всех карт)
   async function loadCardsList() {
     try {
       const res = await fetch('/api/tehkarta')
       const result = await res.json()
       if (result.success) setCardsList(result.data)
-    } catch (err) { console.error('Ошибка загрузки списка:', err) }
+    } catch (err) { 
+      console.error('Ошибка загрузки списка карт:', err) 
+    }
   }
 
-  // 2. Загрузка по клику данных конкретной карты
+  // Загрузка полных данных конкретной карты по её ID
   async function loadSingleCard(id: number) {
     try {
       const res = await fetch(`/api/tehkarta?id=${id}`)
@@ -54,35 +98,45 @@ export default function Home() {
         setMass(card.massKg.toString())
         setProfileSize(card.profileSize)
         
+        // Маппим данные из структуры БД (camelCase) в структуру формы (snake_case + nv)
         setOperations(card.operations.map((op: any) => ({
           operation_number: op.operationNumber,
           operation_name: op.operationName,
           workplace: op.workplace || '',
           equipment: op.equipment || '',
+          nv: op.nv !== null && op.nv !== undefined ? op.nv.toString() : '',
+          cuttingTools: op.cuttingTools || [],
+          measuringTools: op.measuringTools || [],
           rows: op.rows.map((r: any) => ({ type: r.rowType, text: r.text }))
         })))
       }
-    } catch (err) { console.error('Ошибка загрузки карты:', err) }
+    } catch (err) { 
+      console.error('Ошибка загрузки конкретной карты:', err) 
+    }
   }
 
-  // Загрузка первичных данных при старте веб-приложения
+  // Первичная инициализация приложения при старте
   useEffect(() => {
     async function init() {
       try {
+        await loadCuttingCatalog() // Сначала загружаем справочник инструментов
         const res = await fetch('/api/tehkarta')
         const result = await res.json()
         if (result.success && result.data.length > 0) {
           setCardsList(result.data)
+          // Открываем первую карту из списка по умолчанию
           loadSingleCard(result.data[0].id)
         } else {
           startNewCard()
         }
-      } catch (err) { console.error(err) }
+      } catch (err) { 
+        console.error('Ошибка инициализации:', err) 
+      }
     }
     init()
   }, [])
 
-  // Очистить поля бланка формы для создания нового документа
+  // Сброс и создание абсолютно чистого бланка новой карты
   const startNewCard = () => {
     setSelectedCardId(null)
     setDocNumber('')
@@ -90,30 +144,69 @@ export default function Home() {
     setMaterial('')
     setMass('')
     setProfileSize('')
-    setOperations([{ operation_number: '005', operation_name: 'Вхідний контроль', workplace: '', equipment: '', rows: [] }])
+    setOperations([{ 
+      operation_number: '005', 
+      operation_name: 'Вхідний контроль', 
+      workplace: '', 
+      equipment: '', 
+      nv: '', 
+      cuttingTools: [], 
+      measuringTools: [], 
+      rows: [] 
+    }])
   }
 
-  // Функции динамического изменения массивов операций формы
-  const addOperation = () => setOperations([...operations, { operation_number: '', operation_name: '', workplace: '', equipment: '', rows: [] }])
-  const handleOpChange = (index: number, field: keyof Operation, value: string) => {
-    const updated = [...operations]; updated[index] = { ...updated[index], [field]: value }; setOperations(updated)
+  // Добавление новой пустой карточки операции
+  const addOperation = () => setOperations([
+    ...operations, 
+    { 
+      operation_number: '', 
+      operation_name: '', 
+      workplace: '', 
+      equipment: '', 
+      nv: '', 
+      cuttingTools: [], 
+      measuringTools: [], 
+      rows: [] 
+    }
+  ])
+
+  // Обновление текстовых полей и массивов инструментов внутри операции
+  const handleOpChange = (index: number, field: keyof Operation, value: any) => {
+    const updated = [...operations]; 
+    updated[index] = { ...updated[index], [field]: value }; 
+    setOperations(updated)
   }
-  const addRowToOp = (opIndex: number) => { const updated = [...operations]; updated[opIndex].rows.push({ type: 'O', text: '' }); setOperations(updated) }
+
+  // Добавление новой строки перехода "О" к конкретной операции
+  const addRowToOp = (opIndex: number) => { 
+    const updated = [...operations]; 
+    updated[opIndex].rows.push({ type: 'O', text: '' }); 
+    setOperations(updated) 
+  }
+
+  // Обновление текста внутри строки перехода "О"
   const handleRowChange = (opIndex: number, rowIndex: number, value: string) => {
-    const updated = [...operations]; updated[opIndex].rows[rowIndex].text = value; setOperations(updated)
+    const updated = [...operations]; 
+    updated[opIndex].rows[rowIndex].text = value; 
+    setOperations(updated)
   }
 
-  // Отправка (POST) формы бэкенду
+  // Функция сохранения / отправки формы на бэкенд
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setStatusMessage('')
 
+    // Формируем payload. Валидируем строку nv в число Float
     const payload = {
       id: selectedCardId, 
       document_info: { gost: "3.1118-82", form: "1", document_number: docNumber },
       header: { part_name: partName, material: material, mass_kg: parseFloat(mass) || 0, profile_size: profileSize },
-      operations: operations
+      operations: operations.map(op => ({
+        ...op,
+        nv: op.nv.trim() !== '' ? parseFloat(op.nv) : null
+      }))
     }
 
     try {
@@ -126,51 +219,55 @@ export default function Home() {
       const result = await response.json()
       if (result.success) {
         setStatusMessage('Успешно сохранено в PostgreSQL!')
-        await loadCardsList()
-        if (result.data) setSelectedCardId(result.data.id)
+        await loadCardsList() // Обновляем боковое меню архива
+        if (result.data) {
+          setSelectedCardId(result.data.id)
+          // Важно: перезагружаем карту из базы, чтобы прописались выданные СУБД id для связей
+          await loadSingleCard(result.data.id)
+        }
       } else {
         setStatusMessage(`Ошибка: ${result.error}`)
       }
-    } catch (err) { setStatusMessage('Ошибка сети при отправке') } finally { setLoading(false) }
+    } catch (err) { 
+      setStatusMessage('Ошибка сети при отправке') 
+    } finally { 
+      setLoading(false) 
+    }
   }
 
-  // Клиентский фильтр перечня техкарт по номеру документа
+  // Фильтрация архива на клиенте
   const filteredCardsList = cardsList.filter(card =>
     card.documentNumber.toLowerCase().includes(searchQuery.toLowerCase())
   )
-    return (
+  return (
     <main className="min-h-screen bg-gray-50 flex text-black">
       
       {/* ЛЕВАЯ ЧАСТЬ: ОСНОВНАЯ ФОРМА ТЕХКАРТЫ */}
       <div className="flex-1 p-8 overflow-y-auto max-h-screen">
         <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md border border-gray-200">
           
-          {/* Контейнер с относительным позиционированием для разжатия заголовка */}
+          {/* Контейнер заголовка */}
           <div className="relative flex items-center justify-center w-full mb-6">
-            
-            {/* Ваше название без изменений — теперь оно занимает всю ширину и не сжимается */}
             <h1 className="text-xl font-bold text-center text-gray-800">
               Технологическая карта (ГОСТ 3.1118-82)
             </h1>
 
-            {/* Кнопка намертво прижимается к правому краю, не мешая заголовку */}
-            <div className="absolute right-0">
-              {/* Ваша кнопка без единого изменения в коде */}
-              <Link 
-                href={`/reports/${selectedCardId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold px-4 py-1.5 rounded transition shadow-sm cursor-pointer"
-              >
-                <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.8A8.004 8.004 0 0112 4.5c4.14 0 7.5 3.36 7.5 7.5a7.94 7.94 0 01-1.464 4.542m-12.072 0H19.5" />
-                </svg>
-                Печать
-              </Link>
-            </div>
+            {selectedCardId && (
+              <div className="absolute right-0">
+                <Link 
+                  href={`/reports/${selectedCardId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold px-4 py-1.5 rounded transition shadow-sm cursor-pointer"
+                >
+                  <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.8A8.004 8.004 0 0112 4.5c4.14 0 7.5 3.36 7.5 7.5a7.94 7.94 0 01-1.464 4.542m-12.072 0H19.5" />
+                  </svg>
+                  Печать
+                </Link>
+              </div>
+            )}
           </div>
-
-
 
           <form onSubmit={handleSubmit} className="space-y-6">
             
@@ -209,44 +306,133 @@ export default function Home() {
               </div>
 
               {operations.map((op, opIdx) => (
-                <div key={opIdx} className="border border-gray-200 px-4 rounded space-y-3 bg-white shadow-sm relative">
-                  <div className="flex justify-between items-center w-full">
-                    <button type="button" onClick={addOperation} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 my-2 rounded transition">
-                      + Добавить операцию
-                    </button>
-                    {/* КНОПКА УДАЛЕНИЯ ОПЕРАЦИИ */}
+                <div key={opIdx} className="border border-gray-200 p-4 rounded space-y-4 bg-white shadow-sm relative">
+                  
+                  {/* Верхняя линия управления операцией */}
+                  <div className="flex justify-between items-center w-full border-b border-gray-100 pb-2">
+                    <span className="text-xs font-bold text-gray-500">Операция № {opIdx + 1}</span>
                     <button
                       type="button"
-                      onClick={() => {
-                        const updated = operations.filter((_, i) => i !== opIdx)
-                        setOperations(updated)
-                      }}
-                      className=" top-3 right-3 text-gray-400 hover:text-red-600 text-xs font-semibold border border-transparent hover:border-red-200 hover:bg-red-50 px-2 py-0.5 rounded transition"
-                      title="Удалить операцию полностью"
+                      onClick={() => setOperations(operations.filter((_, i) => i !== opIdx))}
+                      className="text-gray-400 hover:text-red-600 text-xs font-semibold border border-transparent hover:border-red-200 hover:bg-red-50 px-2 py-0.5 rounded transition"
                     >
                       Удалить операцию ×
                     </button>
                   </div>
-                  <div className="grid grid-cols-4 gap-2 pt-4">
-                    <div>
+
+                  {/* Сетка основных параметров операции */}
+                  <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
+                    <div className="md:col-span-1">
                       <label className="block text-xs text-gray-400">№ Оп.</label>
                       <input type="text" placeholder="010" value={op.operation_number} onChange={e => handleOpChange(opIdx, 'operation_number', e.target.value)} className="w-full p-2 border rounded text-sm bg-white" required />
                     </div>
-                    <div className="col-span-3">
+                    <div className="md:col-span-5">
                       <label className="block text-xs text-gray-400">Название операции</label>
                       <input type="text" placeholder="Токарная" value={op.operation_name} onChange={e => handleOpChange(opIdx, 'operation_name', e.target.value)} className="w-full p-2 border rounded text-sm bg-white" required />
                     </div>
-                    <div className="col-span-2">
+                    <div className="md:col-span-2">
                       <label className="block text-xs text-gray-400">Рабочее место</label>
                       <input type="text" value={op.workplace} onChange={e => handleOpChange(opIdx, 'workplace', e.target.value)} className="w-full p-2 border rounded text-sm bg-white" />
                     </div>
-                    <div className="col-span-2">
+                    <div className="md:col-span-2">
                       <label className="block text-xs text-gray-400">Оборудование</label>
                       <input type="text" value={op.equipment} onChange={e => handleOpChange(opIdx, 'equipment', e.target.value)} className="w-full p-2 border rounded text-sm bg-white" />
                     </div>
+                    {/* Поле нормы времени */}
+                    <div className="md:col-span-2">
+                      <label className="block text-xs text-gray-400">Норма времени (мин)</label>
+                      <input type="number" step="0.01" min="0" placeholder="0.00" value={op.nv} onChange={e => handleOpChange(opIdx, 'nv', e.target.value)} className="w-full p-2 border rounded text-sm bg-white focus:border-blue-500" />
+                    </div>
                   </div>
 
-                  {/* Блок переходов (строк) внутри конкретной операции */}
+                  {/* Оснащение выведено до переходов «О» */}
+                  <div className="p-3 bg-gray-50 rounded border border-gray-100 space-y-3">
+                    <span className="text-[11px] font-bold text-gray-400 block uppercase tracking-wider">Технологическое оснащение</span>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Выбор режущего инструмента */}
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Режущий инструмент</label>
+                        <select 
+                          className="w-full p-2 border rounded bg-white text-xs"
+                          value=""
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (!val) return;
+                            if (!op.cuttingTools?.some((t: any) => Number(t.cuttingToolId) === Number(val))) {
+                              const updatedTools = [...(op.cuttingTools || []), { cuttingToolId: Number(val) }];
+                              handleOpChange(opIdx, 'cuttingTools', updatedTools);
+                            }
+                          }}
+                        >
+                          <option value="">-- Выбрать из исходника --</option>
+                          {cuttingCatalog.map(tool => (
+                            <option key={tool.id} value={tool.id}>{tool.name}</option>
+                          ))}
+                        </select>
+
+                        {/* Бейджи выбранных режущих инструментов */}
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {op.cuttingTools?.map((ct: any, idx: number) => {
+                            const found = cuttingCatalog.find(c => c.id === ct.cuttingToolId);
+                            return (
+                              <span key={idx} className="text-[11px] bg-blue-50 text-blue-600 border border-blue-100 px-2 py-0.5 rounded flex items-center gap-1">
+                                {found ? found.name : `ID: ${ct.cuttingToolId}`}
+                                <button type="button" className="hover:text-red-500 font-bold ml-0.5" onClick={() => {
+                                  const filtered = op.cuttingTools.filter((_, i) => i !== idx);
+                                  handleOpChange(opIdx, 'cuttingTools', filtered);
+                                }}>×</button>
+                              </span>
+                            )
+                          })}
+                        </div>
+                      </div>
+                      {/* Мерительный инструмент */}
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Мерительный инструмент</label>
+                        <input 
+                          type="text"
+                          placeholder="Ввод вручную (нажмите Enter)..."
+                          className="w-full p-2 border rounded bg-white text-xs focus:outline-none"
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                              e.preventDefault();
+                              const text = e.currentTarget.value.trim();
+                              
+                              try {
+                                const res = await fetch('/api/tools/measuring', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ name: text })
+                                });
+                                const result = await res.json();
+                                if (result.success && result.data) {
+                                  const updatedTools = [...(op.measuringTools || []), { measuringToolId: result.data.id, measuringTool: { name: text } }];
+                                  handleOpChange(opIdx, 'measuringTools', updatedTools);
+                                  e.currentTarget.value = '';
+                                }
+                              } catch (err) { console.error('Ошибка добавления мерительного инструмента:', err) }
+                            }
+                          }}
+                        />
+
+                        {/* Бейджи мерительных инструментов */}
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {op.measuringTools?.map((mt: any, idx: number) => (
+                            <span key={idx} className="text-[11px] bg-green-50 text-green-600 border border-green-100 px-2 py-0.5 rounded flex items-center gap-1">
+                              {mt.measuringTool?.name || mt.name || `ID: ${mt.measuringToolId}`}
+                              <button type="button" className="hover:text-red-500 font-bold ml-0.5" onClick={() => {
+                                const filtered = op.measuringTools.filter((_, i) => i !== idx);
+                                handleOpChange(opIdx, 'measuringTools', filtered);
+                              }}>×</button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Блок переходов (строк О), смещенный ниже блоков инструментов */}
                   <div className="pl-4 border-l-2 border-gray-200 space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-medium text-gray-400">Содержимое (Строки О):</span>
@@ -258,95 +444,60 @@ export default function Home() {
                       <div key={rowIdx} className="flex gap-2 items-center group">
                         <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded">О</span>
                         <input type="text" placeholder="Действие перехода..." value={row.text} onChange={e => handleRowChange(opIdx, rowIdx, e.target.value)} className="w-full p-1.5 border rounded text-xs bg-white focus:outline-none" required />
-                        
-                        {/* КНОПКА УДАЛЕНИЯ КОНКРЕТНОГО ПЕРЕХОДА */}
                         <button
                           type="button"
                           onClick={() => {
-                            const updated = [...operations]
-                            updated[opIdx].rows = updated[opIdx].rows.filter((_, rI) => rI !== rowIdx)
-                            setOperations(updated)
+                            const updatedOps = [...operations]
+                            updatedOps[opIdx].rows = updatedOps[opIdx].rows.filter((_, rI) => rI !== rowIdx)
+                            setOperations(updatedOps)
                           }}
-                          className="text-gray-400 hover:text-red-500 text-xs font-bold px-1.5 py-1 hover:bg-gray-100 rounded transition"
-                          title="Удалить строку перехода"
+                          className="text-gray-300 hover:text-red-500 text-xs px-1"
                         >
-                          ✕
+                          ×
                         </button>
                       </div>
                     ))}
                   </div>
+
                 </div>
               ))}
             </div>
-            {/* КНОПКА СОХРАНЕНИЯ В БД */}
-            <div className="pt-4 border-t flex flex-col items-center gap-3">
-              <button type="submit" disabled={loading} className="w-full py-3 bg-green-600 text-white font-semibold rounded hover:bg-green-700 transition disabled:bg-gray-400">
-                {loading ? 'Сохранение...' : selectedCardId ? 'Сохранить изменения (Перезаписать)' : 'Создать карту в БД'}
+
+            {/* Вывод статуса */}
+            {statusMessage && (
+              <div className={`p-3 text-sm rounded ${statusMessage.startsWith('Ошибка') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                {statusMessage}
+              </div>
+            )}
+
+            {/* Кнопки отправки формы */}
+            <div className="flex gap-4 pt-2">
+              <button type="submit" disabled={loading} className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-900 text-white rounded font-medium text-sm transition shadow-sm disabled:bg-gray-400">
+                {loading ? 'Сохранение в базу данных...' : 'Сохранить технологическую карту'}
               </button>
-              {statusMessage && (
-                <p className={`text-sm font-medium ${statusMessage.includes('Ошибка') ? 'text-red-600' : 'text-green-600'}`}>
-                  {statusMessage}
-                </p>
-              )}
+              <button type="button" onClick={startNewCard} className="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded font-medium text-sm transition">
+                Сбросить бланк
+              </button>
             </div>
           </form>
         </div>
       </div>
 
-      {/* ПРАВАЯ ЧАСТЬ: ПЕРЕЧЕНЬ ТЕХКАРТ С ИНПУТОМ ФИЛЬТРАЦИИ И КНОПКОЙ ОЧИСТКИ */}
-      <div className="w-80 bg-white border-l border-gray-200 p-4 flex flex-col justify-between shadow-sm max-h-screen sticky top-0">
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-bold text-gray-700 uppercase text-xs tracking-wider">Перечень техкарт</h2>
-            <button onClick={startNewCard} className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs transition">
-              Новый бланк
+      {/* ПРАВАЯ ЧАСТЬ: МЕНЮ СПИСКА ТЕХКАРТ */}
+      <div className="w-80 border-l border-gray-200 bg-white p-6 overflow-y-auto max-h-screen">
+        <h3 className="font-bold text-gray-800 mb-4 text-sm">Архив документов</h3>
+        <input type="text" placeholder="Поиск по номеру..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full p-2 border rounded mb-4 text-xs bg-gray-50" />
+        <div className="space-y-2">
+          {filteredCardsList.map(card => (
+            <button key={card.id} type="button" onClick={() => loadSingleCard(card.id)} className={`w-full text-left p-3 rounded border text-xs transition ${selectedCardId === card.id ? 'border-blue-500 bg-blue-50/50 text-blue-700' : 'border-gray-100 hover:bg-gray-50 text-gray-600'}`}>
+              <div className="font-semibold">№ {card.documentNumber}</div>
+              <div className="text-gray-400 truncate mt-0.5">{card.partName}</div>
             </button>
-          </div>
-
-          {/* ПОЛЕ ФИЛЬТРАЦИИ С КНОПКОЙ СБРОСА ФИЛЬТРА ✕ */}
-          <div className="mb-4 relative flex items-center">
-            <input
-              type="text"
-              placeholder="Поиск по номеру документа..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full p-2 pr-8 border border-gray-300 rounded text-xs bg-gray-50 focus:bg-white focus:outline-none focus:border-blue-500"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 text-gray-400 hover:text-gray-600 text-sm font-bold focus:outline-none"
-                title="Очистить фильтр"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          {/* ДИНАМИЧЕСКИЙ СПИСОК КАРТ С ФИЛЬТРОМ И ЗАГРУЗКОЙ ПО КЛИКУ */}
-          <div className="space-y-1 overflow-y-auto max-h-[75vh] pr-1">
-            {filteredCardsList.length > 0 ? (
-              filteredCardsList.map((card) => (
-                <button
-                  key={card.id}
-                  onClick={() => loadSingleCard(card.id)}
-                  className={`w-full text-left p-2.5 rounded text-xs border transition flex flex-col gap-0.5 ${
-                    selectedCardId === card.id
-                      ? 'bg-blue-50 border-blue-300 text-blue-700 font-medium'
-                      : 'bg-white border-gray-100 hover:bg-gray-50 text-gray-600'
-                  }`}
-                >
-                  <span className="truncate font-mono opacity-80 font-bold">{card.documentNumber || 'Без номера'}</span>
-                  <span className="truncate text-gray-500">{card.partName || 'Без названия'}</span>
-                </button>
-              ))
-            ) : (
-              <p className="text-xs text-gray-400 text-center py-4">Документы не найдены</p>
-            )}
-          </div>
+          ))}
+          {filteredCardsList.length === 0 && <div className="text-xs text-gray-400 text-center py-4">Документы не найдены</div>}
         </div>
-        <div className="text-[10px] text-gray-400 text-center border-t pt-2">БД: PostgreSQL в Docker</div>
       </div>
+
     </main>
   )
 }

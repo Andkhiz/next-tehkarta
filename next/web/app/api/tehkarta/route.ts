@@ -13,8 +13,24 @@ export async function GET(request: Request) {
         where: { id: parseInt(cardId) },
         include: {
           operations: {
-            include: { rows: true },
-            orderBy: { order: 'asc' }
+            orderBy: { order: 'asc' },
+            include: { 
+              rows: true,
+              // Добавляем загрузку режущих инструментов из связующей таблицы и справочника
+              cuttingTools: {
+                include: {
+                  cuttingTool: true
+                }
+              },
+              
+              // Добавляем загрузку мерительных инструментов из связующей таблицы и справочника
+              measuringTools: {
+                include: {
+                  measuringTool: true
+                }
+              }
+            },
+            
           }
         }
       })
@@ -40,7 +56,6 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    // Добавляем id из тела запроса (если он передан с фронтенда)
     const { id, header, document_info, operations } = body
 
     // Данные для записи/обновления шапки
@@ -52,61 +67,87 @@ export async function POST(request: Request) {
       profileSize: header.profile_size,
     }
 
+    // Хелпер для маппинга операций, чтобы не дублировать код для создания и обновления
+    const mapOperations = (ops: any[]) => {
+      return ops.map((op: any, opIdx: number) => ({
+        operationNumber: op.operation_number || op.operationNumber,
+        operationName: op.operation_name || op.operationName,
+        workplace: op.workplace || null,
+        equipment: op.equipment || null,
+        order: opIdx,
+        
+        // 1. Сохраняем норму времени (приводим к числу или пишем null)
+        nv: op.nv !== undefined && op.nv !== null ? Number(op.nv) : null,
+        
+        // 2. Создаем связи с режущими инструментами
+        cuttingTools: {
+          create: (op.cuttingTools || []).map((ct: any) => ({
+            cuttingTool: {
+              connect: { id: Number(ct.cuttingToolId || ct.id) }
+            }
+          }))
+        },
+
+        // 3. Создаем связи с мерительными инструментами
+        measuringTools: {
+          create: (op.measuringTools || []).map((mt: any) => ({
+            measuringTool: {
+              connect: { id: Number(mt.measuringToolId || mt.id) }
+            }
+          }))
+        },
+
+        rows: {
+          create: (op.rows || []).map((row: any, rowIdx: number) => ({
+            rowType: row.type || row.rowType,
+            text: row.text,
+            order: rowIdx
+          }))
+        }
+      }))
+    }
+
+    // Блок include для возвращаемого ответа, чтобы фронтенд сразу получал актуальное состояние
+    const commonInclude = {
+      operations: {
+        orderBy: { order: 'asc' as const },
+        include: {
+          rows: true,
+          cuttingTools: { include: { cuttingTool: true } },
+          measuringTools: { include: { measuringTool: true } }
+        }
+      }
+    }
+
     // ЕСЛИ ID СУЩЕСТВУЕТ — ОБНОВЛЯЕМ ТЕКУЩУЮ КАРТУ
     if (id) {
-      // 1. Удаляем старые связанные операции и строки, чтобы записать новые актуальные
-      await prisma.operation.deleteMany({ where: { routeCardId: id } })
+      // 1. Каскадно удаляем старые операции (инструменты и строки сотрутся автоматически благодаря onDelete: Cascade)
+      await prisma.operation.deleteMany({ where: { routeCardId: Number(id) } })
 
-      // 2. Обновляем шапку и создаем новые операции внутри нее
+      // 2. Обновляем шапку и создаем новые операции со связями
       const updatedCard = await prisma.routeCard.update({
         where: { id: Number(id) },
         data: {
           ...cardData,
           operations: {
-            create: operations.map((op: any, opIdx: number) => ({
-              operationNumber: op.operation_number,
-              operationName: op.operation_name,
-              workplace: op.workplace || null,
-              equipment: op.equipment || null,
-              order: opIdx,
-              rows: {
-                create: (op.rows || []).map((row: any, rowIdx: number) => ({
-                  rowType: row.type,
-                  text: row.text,
-                  order: rowIdx
-                }))
-              }
-            }))
+            create: mapOperations(operations)
           }
         },
-        include: { operations: { include: { rows: true } } }
+        include: commonInclude
       })
 
       return NextResponse.json({ success: true, data: updatedCard })
     }
 
-    // ЕСЛИ ID НЕТ — СОЗДАЕМ НОВУЮ КАРТУ С НУЛЯ (Ваш старый код)
+    // ЕСЛИ ID НЕТ — СОЗДАЕМ НОВУЮ КАРТУ С НУЛЯ
     const savedCard = await prisma.routeCard.create({
       data: {
         ...cardData,
         operations: {
-          create: operations.map((op: any, opIdx: number) => ({
-            operationNumber: op.operation_number,
-            operationName: op.operation_name,
-            workplace: op.workplace || null,
-            equipment: op.equipment || null,
-            order: opIdx,
-            rows: {
-              create: (op.rows || []).map((row: any, rowIdx: number) => ({
-                rowType: row.type,
-                text: row.text,
-                order: rowIdx
-              }))
-            }
-          }))
+          create: mapOperations(operations)
         }
       },
-      include: { operations: { include: { rows: true } } }
+      include: commonInclude
     })
 
     return NextResponse.json({ success: true, data: savedCard }, { status: 201 })
