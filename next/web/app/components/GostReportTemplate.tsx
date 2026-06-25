@@ -544,7 +544,7 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
   const formatNum = (num: number) => num.toString().padStart(2, '0');
 
   return data.operations?.map((operation) => (
-    <View key={operation.id} style={{ flexDirection: 'column' }} wrap={false}>
+    <View key={operation.id} style={{ flexDirection: 'column' }}>
       
       {/* ================= СТРОКА А (ДАННЫЕ ОПЕРАЦИИ) ================= */}
       {(() => {

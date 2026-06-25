@@ -64,6 +64,7 @@ export async function POST(request: Request) {
       partName: header.part_name,
       material: header.material,
       massKg: Number(header.mass_kg),
+      massZagKg: Number(header.mass_zag_kg),
       profileSize: header.profile_size,
     }
 

@@ -17,7 +17,8 @@ model RouteCard {
   documentNumber  String      @unique @map("document_number")
   partName        String      @map("part_name")       
   material        String      
-  massKg          Float       @map("mass_kg")         
+  massKg          Float       @map("mass_kg")    
+  massZagKg       Float       @default(0) @map("mass_zag_kg")      
   profileSize     String      @map("profile_size")    
   operations      Operation[] 
   createdAt       DateTime    @default(now()) @map("created_at")

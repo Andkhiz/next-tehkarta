@@ -54,6 +54,7 @@ export default function Home() {
   const [partName, setPartName] = useState('')
   const [material, setMaterial] = useState('')
   const [mass, setMass] = useState('')
+  const [massZag, setMassZag] = useState('')
   const [profileSize, setProfileSize] = useState('')
   
   // Массив операций
@@ -96,6 +97,7 @@ export default function Home() {
         setPartName(card.partName)
         setMaterial(card.material)
         setMass(card.massKg.toString())
+        setMassZag(card.massZagKg.toString())
         setProfileSize(card.profileSize)
         
         // Маппим данные из структуры БД (camelCase) в структуру формы (snake_case + nv)
@@ -143,6 +145,7 @@ export default function Home() {
     setPartName('')
     setMaterial('')
     setMass('')
+    setMassZag('')
     setProfileSize('')
     setOperations([{ 
       operation_number: '005', 
@@ -202,7 +205,7 @@ export default function Home() {
     const payload = {
       id: selectedCardId, 
       document_info: { gost: "3.1118-82", form: "1", document_number: docNumber },
-      header: { part_name: partName, material: material, mass_kg: parseFloat(mass) || 0, profile_size: profileSize },
+      header: { part_name: partName, material: material, mass_kg: parseFloat(mass) || 0, mass_zag_kg: parseFloat(massZag) || 0, profile_size: profileSize },
       operations: operations.map(op => ({
         ...op,
         nv: op.nv.trim() !== '' ? parseFloat(op.nv) : null
@@ -271,30 +274,45 @@ export default function Home() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             
-            {/* БЛОК ШАПКИ ДОКУМЕНТА */}
-            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded border border-gray-100">
-              <h2 className="col-span-2 font-semibold text-gray-700 text-sm">Шапка документа</h2>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Номер документа</label>
-                <input type="text" value={docNumber} onChange={e => setDocNumber(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Наименование детали</label>
-                <input type="text" value={partName} onChange={e => setPartName(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
-              </div>
-              <div className="col-span-2">
-                <label className="block text-xs text-gray-400 mb-1">Материал</label>
-                <input type="text" value={material} onChange={e => setMaterial(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Масса (кг)</label>
-                <input type="number" step="0.01" value={mass} onChange={e => setMass(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Профиль и размеры</label>
-                <input type="text" value={profileSize} onChange={e => setProfileSize(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
-              </div>
+            <div className="grid grid-cols-6 gap-4 bg-gray-50 p-4 rounded border border-gray-100">
+            {/* Заголовок на всю ширину (6 колонок) */}
+            <h2 className="col-span-6 font-semibold text-gray-700 text-sm">Шапка документа</h2>
+            
+            {/* ПЕРВЫЙ РЯД: Ровно пополам (по 3 колонки из 6) */}
+            <div className="col-span-3">
+              <label className="block text-xs text-gray-400 mb-1">Номер документа</label>
+              <input type="text" value={docNumber} onChange={e => setDocNumber(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
             </div>
+            
+            <div className="col-span-3">
+              <label className="block text-xs text-gray-400 mb-1">Наименование детали</label>
+              <input type="text" value={partName} onChange={e => setPartName(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
+            </div>
+            
+            {/* ВТОРОЙ РЯД: Материал на всю ширину (6 колонок) */}
+            <div className="col-span-6">
+              <label className="block text-xs text-gray-400 mb-1">Материал</label>
+              <input type="text" value={material} onChange={e => setMaterial(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
+            </div>
+            
+            {/* ТРЕТИЙ РЯД: Три поля в ряд (каждое по 2 колонки из 6: 6 / 3 = 2) */}
+            <div className="col-span-2">
+              <label className="block text-xs text-gray-400 mb-1">Масса чистая (кг)</label>
+              <input type="number" step="0.01" value={mass} onChange={e => setMass(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
+            </div>
+            
+            <div className="col-span-2">
+              <label className="block text-xs text-gray-400 mb-1">Масса заготовки (кг)</label>
+              <input type="number" step="0.01" value={massZag} onChange={e => setMassZag(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
+            </div>
+            
+            <div className="col-span-2">
+              <label className="block text-xs text-gray-400 mb-1">Профиль и размеры</label>
+              <input type="text" value={profileSize} onChange={e => setProfileSize(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
+            </div>
+          </div>
+
+
 
             {/* БЛОК КАРТОЧЕК ОПЕРАЦИЙ */}
             <div className="space-y-4">
@@ -311,6 +329,9 @@ export default function Home() {
                   {/* Верхняя линия управления операцией */}
                   <div className="flex justify-between items-center w-full border-b border-gray-100 pb-2">
                     <span className="text-xs font-bold text-gray-500">Операция № {opIdx + 1}</span>
+                    <button type="button" onClick={addOperation} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded text-xs font-medium transition">
+                      + Добавить операцию
+                    </button>
                     <button
                       type="button"
                       onClick={() => setOperations(operations.filter((_, i) => i !== opIdx))}
@@ -484,14 +505,21 @@ export default function Home() {
       </div>
 
       {/* ПРАВАЯ ЧАСТЬ: МЕНЮ СПИСКА ТЕХКАРТ */}
-      <div className="w-80 border-l border-gray-200 bg-white p-6 overflow-y-auto max-h-screen">
-        <h3 className="font-bold text-gray-800 mb-4 text-sm">Архив документов</h3>
-        <input type="text" placeholder="Поиск по номеру..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full p-2 border rounded mb-4 text-xs bg-gray-50" />
+      <div className="w-80 border-l border-gray-200 bg-white p-4 overflow-y-auto max-h-screen">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-bold text-gray-700 text-xs uppercase tracking-wider">Перечень техкарт</h3>
+          <button type="button" onClick={() => {startNewCard()}} className="px-2 py-1 bg-emerald-600 text-white rounded text-[11px] font-medium hover:bg-emerald-700 transition">
+            Новый бланк
+          </button>
+        </div>
+        
+        <input type="text" placeholder="Поиск по номеру документа..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full p-2 border rounded mb-4 text-xs bg-white focus:outline-none focus:border-blue-500" />
+        
         <div className="space-y-2">
           {filteredCardsList.map(card => (
-            <button key={card.id} type="button" onClick={() => loadSingleCard(card.id)} className={`w-full text-left p-3 rounded border text-xs transition ${selectedCardId === card.id ? 'border-blue-500 bg-blue-50/50 text-blue-700' : 'border-gray-100 hover:bg-gray-50 text-gray-600'}`}>
-              <div className="font-semibold">№ {card.documentNumber}</div>
-              <div className="text-gray-400 truncate mt-0.5">{card.partName}</div>
+            <button key={card.id} type="button" onClick={() => loadSingleCard(card.id)} className={`w-full text-left p-2.5 rounded border text-xs transition ${selectedCardId === card.id ? 'border-blue-300 bg-blue-50/50 text-blue-600' : 'border-gray-200 hover:bg-gray-50 text-gray-500'}`}>
+              <div className="font-semibold tracking-wide">{card.documentNumber}</div>
+              <div className="text-gray-400 uppercase text-[11px] truncate mt-0.5">{card.partName}</div>
             </button>
           ))}
           {filteredCardsList.length === 0 && <div className="text-xs text-gray-400 text-center py-4">Документы не найдены</div>}
