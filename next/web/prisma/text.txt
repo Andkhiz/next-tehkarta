@@ -7,3 +7,6 @@
 bash
 
 npx prisma migrate dev --name add_description_to_route_card
+
+
+npx prisma generate

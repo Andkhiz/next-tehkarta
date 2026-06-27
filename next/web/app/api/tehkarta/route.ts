@@ -15,22 +15,25 @@ export async function GET(request: Request) {
           operations: {
             orderBy: { order: 'asc' },
             include: { 
-              rows: true,
-              // Добавляем загрузку режущих инструментов из связующей таблицы и справочника
-              cuttingTools: {
+              // ИЗМЕНЕНО: Запрашиваем строки и рекурсивно подтягиваем инструменты ДЛЯ КАЖДОЙ СТРОКИ
+              rows: {
+                orderBy: { order: 'asc' },
                 include: {
-                  cuttingTool: true
-                }
-              },
-              
-              // Добавляем загрузку мерительных инструментов из связующей таблицы и справочника
-              measuringTools: {
-                include: {
-                  measuringTool: true
+                  // Загрузка режущих инструментов для этой строки
+                  cuttingTools: {
+                    include: {
+                      cuttingTool: true
+                    }
+                  },
+                  // Загрузка мерительных инструментов для этой строки
+                  measuringTools: {
+                    include: {
+                      measuringTool: true
+                    }
+                  }
                 }
               }
             },
-            
           }
         }
       })
@@ -68,7 +71,7 @@ export async function POST(request: Request) {
       profileSize: header.profile_size,
     }
 
-    // Хелпер для маппинга операций, чтобы не дублировать код для создания и обновления
+    // Хелпер для маппинга операций, адаптированный под новую схему Prisma
     const mapOperations = (ops: any[]) => {
       return ops.map((op: any, opIdx: number) => ({
         operationNumber: op.operation_number || op.operationNumber,
@@ -77,55 +80,63 @@ export async function POST(request: Request) {
         equipment: op.equipment || null,
         order: opIdx,
         
-        // 1. Сохраняем норму времени (приводим к числу или пишем null)
+        // Сохраняем норму времени
         nv: op.nv !== undefined && op.nv !== null ? Number(op.nv) : null,
         
-        // 2. Создаем связи с режущими инструментами
-        cuttingTools: {
-          create: (op.cuttingTools || []).map((ct: any) => ({
-            cuttingTool: {
-              connect: { id: Number(ct.cuttingToolId || ct.id) }
-            }
-          }))
-        },
-
-        // 3. Создаем связи с мерительными инструментами
-        measuringTools: {
-          create: (op.measuringTools || []).map((mt: any) => ({
-            measuringTool: {
-              connect: { id: Number(mt.measuringToolId || mt.id) }
-            }
-          }))
-        },
-
+        // Инструменты из корня операции удалены. 
+        // Теперь они создаются вложенными элементами внутри каждой строки:
         rows: {
           create: (op.rows || []).map((row: any, rowIdx: number) => ({
-            rowType: row.type || row.rowType,
+            rowType: row.type || row.rowType || 'O',
             text: row.text,
-            order: rowIdx
+            order: rowIdx,
+            
+            // Создаем связи с режущими инструментами ДЛЯ КОНКРЕТНОЙ СТРОКИ
+            cuttingTools: {
+              create: (row.cuttingTools || []).map((ct: any) => ({
+                cuttingTool: {
+                  connect: { id: Number(ct.cuttingToolId || ct.id) }
+                }
+              }))
+            },
+
+            // Создаем связи с мерительными инструментами ДЛЯ КОНКРЕТНОЙ СТРОКИ
+            measuringTools: {
+              create: (row.measuringTools || []).map((mt: any) => ({
+                measuringTool: {
+                  connect: { id: Number(mt.measuringToolId || mt.id) }
+                }
+              }))
+            }
           }))
         }
       }))
     }
 
-    // Блок include для возвращаемого ответа, чтобы фронтенд сразу получал актуальное состояние
+    // Обновленный блок include для возвращаемого ответа.
+    // Вытягивает строки и рекурсивно подтягивает каталоги инструментов для каждой строки.
     const commonInclude = {
       operations: {
         orderBy: { order: 'asc' as const },
         include: {
-          rows: true,
-          cuttingTools: { include: { cuttingTool: true } },
-          measuringTools: { include: { measuringTool: true } }
+          rows: {
+            orderBy: { order: 'asc' as const },
+            include: {
+              cuttingTools: { include: { cuttingTool: true } },
+              measuringTools: { include: { measuringTool: true } }
+            }
+          }
         }
       }
     }
 
     // ЕСЛИ ID СУЩЕСТВУЕТ — ОБНОВЛЯЕМ ТЕКУЩУЮ КАРТУ
     if (id) {
-      // 1. Каскадно удаляем старые операции (инструменты и строки сотрутся автоматически благодаря onDelete: Cascade)
+      // 1. Каскадно удаляем старые операции
+      // Благодаря onDelete: Cascade в схеме, все старые строки и их инструменты очистятся автоматически!
       await prisma.operation.deleteMany({ where: { routeCardId: Number(id) } })
 
-      // 2. Обновляем шапку и создаем новые операции со связями
+      // 2. Обновляем шапку и создаем новые операции с глубоко вложенными строками и инструментами
       const updatedCard = await prisma.routeCard.update({
         where: { id: Number(id) },
         data: {
@@ -161,3 +172,4 @@ export async function POST(request: Request) {
     )
   }
 }
+

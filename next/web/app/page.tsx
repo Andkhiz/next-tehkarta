@@ -2,12 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 // 1. Полные интерфейсы для типизации с учетом новых полей и таблиц-справочников
-interface OperationRow { 
-  type: string; 
-  text: string 
-}
 
 interface ToolRelation { 
   id?: number; 
@@ -15,7 +12,15 @@ interface ToolRelation {
   measuringToolId?: number; 
   cuttingTool?: { name: string }; 
   measuringTool?: { name: string };
-  name?: string; // Для временного хранения ручного ввода до сохранения
+  name?: string;   // Для временного хранения ручного ввода до сохранения
+  rowKey?: string; // Временный ключ для удобной привязки инструментов в UI-компонентах
+}
+
+interface OperationRow { 
+  type: string; 
+  text: string;
+  cuttingTools: ToolRelation[];   // ИЗМЕНЕНО: Режущий инструмент теперь привязан к строке перехода
+  measuringTools: ToolRelation[]; // ИЗМЕНЕНО: Мерительный инструмент теперь привязан к строке перехода
 }
 
 interface Operation {
@@ -24,9 +29,7 @@ interface Operation {
   workplace: string
   equipment: string
   nv: string // На фронтенде храним строкой для удобства работы <input type="number">
-  cuttingTools: ToolRelation[]
-  measuringTools: ToolRelation[]
-  rows: OperationRow[]
+  rows: OperationRow[] // ИЗМЕНЕНО: Массивы инструментов удалены из корня операции
 }
 
 interface CardListItem { 
@@ -39,6 +42,7 @@ interface ToolCatalogItem {
   id: number; 
   name: string 
 }
+
 
 export default function Home() {
   // Состояния для перечня документов и фильтра
@@ -153,8 +157,6 @@ export default function Home() {
       workplace: '', 
       equipment: '', 
       nv: '', 
-      cuttingTools: [], 
-      measuringTools: [], 
       rows: [] 
     }])
   }
@@ -168,8 +170,6 @@ export default function Home() {
       workplace: '', 
       equipment: '', 
       nv: '', 
-      cuttingTools: [], 
-      measuringTools: [], 
       rows: [] 
     }
   ])
@@ -184,7 +184,7 @@ export default function Home() {
   // Добавление новой строки перехода "О" к конкретной операции
   const addRowToOp = (opIndex: number) => { 
     const updated = [...operations]; 
-    updated[opIndex].rows.push({ type: 'O', text: '' }); 
+    updated[opIndex].rows.push({ type: 'O', text: '', cuttingTools: [], measuringTools: [] }); 
     setOperations(updated) 
   }
 
@@ -237,6 +237,30 @@ export default function Home() {
       setLoading(false) 
     }
   }
+
+  // Изменение порядка строк переходов внутри конкретной операции
+const handleRowDrop = (opIndex: number, result: any) => {
+  // Если элемент сбросили вне рабочей зоны droppable
+  if (!result.destination) return
+
+  const sourceIdx = result.source.index
+  const destIdx = result.destination.index
+
+  // Если элемент сбросили на то же самое место
+  if (sourceIdx === destIdx) return
+
+  const updatedOps = [...operations]
+  const rows = [...updatedOps[opIndex].rows]
+
+  // Удаляем перемещаемый элемент из старой позиции и вставляем в новую
+  const [movedRow] = rows.splice(sourceIdx, 1)
+  rows.splice(destIdx, 0, movedRow)
+
+  // Обновляем состояние
+  updatedOps[opIndex].rows = rows
+  setOperations(updatedOps)
+}
+
 
   // Фильтрация архива на клиенте
   const filteredCardsList = cardsList.filter(card =>
@@ -367,11 +391,11 @@ export default function Home() {
                   </div>
 
                   {/* Оснащение выведено до переходов «О» */}
-                  <div className="p-3 bg-gray-50 rounded border border-gray-100 space-y-3">
+                  {/*<div className="p-3 bg-gray-50 rounded border border-gray-100 space-y-3">
                     <span className="text-[11px] font-bold text-gray-400 block uppercase tracking-wider">Технологическое оснащение</span>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Выбор режущего инструмента */}
+                      {/* Выбор режущего инструмента }
                       <div>
                         <label className="block text-xs text-gray-500 mb-1">Режущий инструмент</label>
                         <select 
@@ -392,7 +416,7 @@ export default function Home() {
                           ))}
                         </select>
 
-                        {/* Бейджи выбранных режущих инструментов */}
+                        {/* Бейджи выбранных режущих инструментов }
                         <div className="mt-1.5 flex flex-wrap gap-1">
                           {op.cuttingTools?.map((ct: any, idx: number) => {
                             const found = cuttingCatalog.find(c => c.id === ct.cuttingToolId);
@@ -408,7 +432,7 @@ export default function Home() {
                           })}
                         </div>
                       </div>
-                      {/* Мерительный инструмент */}
+                      {/* Мерительный инструмент }
                       <div>
                         <label className="block text-xs text-gray-500 mb-1">Мерительный инструмент</label>
                         <input 
@@ -437,7 +461,7 @@ export default function Home() {
                           }}
                         />
 
-                        {/* Бейджи мерительных инструментов */}
+                        {/* Бейджи мерительных инструментов }
                         <div className="mt-1.5 flex flex-wrap gap-1">
                           {op.measuringTools?.map((mt: any, idx: number) => (
                             <span key={idx} className="text-[11px] bg-green-50 text-green-600 border border-green-100 px-2 py-0.5 rounded flex items-center gap-1">
@@ -451,34 +475,165 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </div> */}
 
-                  {/* Блок переходов (строк О), смещенный ниже блоков инструментов */}
-                  <div className="pl-4 border-l-2 border-gray-200 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-medium text-gray-400">Содержимое (Строки О):</span>
-                      <button type="button" onClick={() => addRowToOp(opIdx)} className="text-xs text-blue-600 hover:underline">
-                        + Добавить переход
-                      </button>
-                    </div>
-                    {op.rows.map((row, rowIdx) => (
-                      <div key={rowIdx} className="flex gap-2 items-center group">
-                        <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded">О</span>
-                        <input type="text" placeholder="Действие перехода..." value={row.text} onChange={e => handleRowChange(opIdx, rowIdx, e.target.value)} className="w-full p-1.5 border rounded text-xs bg-white focus:outline-none" required />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const updatedOps = [...operations]
-                            updatedOps[opIdx].rows = updatedOps[opIdx].rows.filter((_, rI) => rI !== rowIdx)
-                            setOperations(updatedOps)
-                          }}
-                          className="text-gray-300 hover:text-red-500 text-xs px-1"
+                  {/* Блок переходов (строк О) с плотной сеткой инструментов */}
+                    {/* Блок переходов (строк О) с плотной сеткой инструментов и Drag and Drop */}
+                    <div className="pl-4 border-l-2 border-gray-200 space-y-1">
+                      <div className="flex justify-between items-center mb-0.5">
+                        <span className="text-xs font-medium text-gray-400">Содержимое (Строки О):</span>
+                        <button 
+                          type="button" 
+                          onClick={() => addRowToOp(opIdx)} 
+                          className="text-xs text-blue-600 hover:underline"
                         >
-                          ×
+                          + Добавить переход
                         </button>
                       </div>
-                    ))}
-                  </div>
+                      
+                      {/* Контекст перетаскивания строк для конкретной операции */}
+                      <DragDropContext onDragEnd={(result) => handleRowDrop(opIdx, result)}>
+                        <Droppable droppableId={`droppable-rows-${opIdx}`}>
+                          {(provided) => (
+                            <div 
+                              {...provided.droppableProps} 
+                              ref={provided.innerRef}
+                              className="space-y-1"
+                            >
+                              {op.rows.map((row, rowIdx) => (
+                                <Draggable 
+                                  key={`row-${opIdx}-${rowIdx}`} 
+                                  draggableId={`drag-${opIdx}-${rowIdx}`} 
+                                  index={rowIdx}
+                                >
+                                  {(provided, snapshot) => (
+                                    <div 
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      className={`flex gap-2 items-start py-0.5 group transition-colors ${
+                                        snapshot.isDragging ? 'bg-blue-50/60 rounded shadow-sm' : ''
+                                      }`}
+                                    >
+                                      
+                                      {/* Буква О (работает как ручка перетаскивания) */}
+                                      <span 
+                                        {...provided.dragHandleProps}
+                                        className="text-xs font-bold text-gray-400 bg-gray-50 border px-2 py-1.5 rounded h-[32px] flex items-center shadow-sm cursor-grab active:cursor-grabbing hover:bg-gray-100 select-none"
+                                        title="Потяните для изменения порядка"
+                                      >
+                                        О
+                                      </span>
+                                      
+                                      {/* Поле действия перехода */}
+                                      <input 
+                                        type="text" 
+                                        placeholder="Действие перехода..." 
+                                        value={row.text} 
+                                        onChange={e => handleRowChange(opIdx, rowIdx, e.target.value)} 
+                                        className="flex-1 p-1.5 border rounded text-xs bg-white focus:outline-none focus:border-blue-400 shadow-sm h-[32px]" 
+                                        required 
+                                      />
+
+                                      {/* Правая часть: Фиксированная ячейка инструментов с вертикальным переносом */}
+                                      <div className="relative flex flex-col gap-1 w-64 bg-gray-50/30 border border-dashed border-gray-200 rounded p-1 min-h-[32px] pr-8">
+                                        
+                                        {/* Компактная кнопка «+» для добавления инструмента */}
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const updatedOps = [...operations];
+                                            const currentTools = row.measuringTools || [];
+                                            updatedOps[opIdx].rows[rowIdx].measuringTools = [
+                                              ...currentTools,
+                                              { name: '', measuringTool: { name: '' } }
+                                            ];
+                                            setOperations(updatedOps);
+                                          }}
+                                          className="absolute top-1 right-1 text-[11px] text-green-600 bg-green-50 hover:bg-green-100 border border-green-200 rounded w-5 h-5 font-bold transition-colors flex items-center justify-center z-10"
+                                          title="Добавить инструмент"
+                                        >
+                                          +
+                                        </button>
+
+                                        {/* Если массив пуст, по умолчанию показываем один инпут */}
+                                        {(!row.measuringTools || row.measuringTools.length === 0) ? (
+                                          <div className="flex items-center border rounded bg-white shadow-sm h-[24px] pr-1 focus-within:border-green-400 transition-colors w-full">
+                                            <input
+                                              type="text"
+                                              placeholder="Инструмент..."
+                                              value=""
+                                              onChange={(e) => {
+                                                const updatedOps = [...operations];
+                                                updatedOps[opIdx].rows[rowIdx].measuringTools = [
+                                                  { name: e.target.value, measuringTool: { name: e.target.value } }
+                                                ];
+                                                setOperations(updatedOps);
+                                              }}
+                                              className="w-full px-2 py-0.5 text-xs bg-transparent focus:outline-none"
+                                            />
+                                          </div>
+                                        ) : (
+                                          /* Мапим инструменты вертикальной стопкой */
+                                          row.measuringTools.map((mt, mtIdx) => (
+                                            <div key={mtIdx} className="flex items-center border rounded bg-white shadow-sm h-[24px] pr-1 focus-within:border-green-400 transition-colors w-full">
+                                              <input
+                                                type="text"
+                                                placeholder="Инструмент..."
+                                                value={mt.measuringTool?.name || mt.name || ''}
+                                                onChange={(e) => {
+                                                  const updatedOps = [...operations];
+                                                  updatedOps[opIdx].rows[rowIdx].measuringTools[mtIdx] = {
+                                                    ...updatedOps[opIdx].rows[rowIdx].measuringTools[mtIdx],
+                                                    name: e.target.value,
+                                                    measuringTool: { name: e.target.value }
+                                                  };
+                                                  setOperations(updatedOps);
+                                                }}
+                                                className="w-full px-2 py-0.5 text-xs bg-transparent focus:outline-none"
+                                              />
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  const updatedOps = [...operations];
+                                                  updatedOps[opIdx].rows[rowIdx].measuringTools = row.measuringTools.filter((_, i) => i !== mtIdx);
+                                                  setOperations(updatedOps);
+                                                }}
+                                                className="text-gray-400 hover:text-red-500 font-bold text-xs px-0.5"
+                                              >
+                                                ×
+                                              </button>
+                                            </div>
+                                          ))
+                                        )}
+                                      </div>
+
+                                      {/* Кнопка удаления всей строки перехода */}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const updatedOps = [...operations];
+                                          updatedOps[opIdx].rows = updatedOps[opIdx].rows.filter((_, rI) => rI !== rowIdx);
+                                          setOperations(updatedOps);
+                                        }}
+                                        className="text-gray-300 hover:text-red-500 text-xs font-bold transition-colors h-[32px] flex items-center px-1"
+                                      >
+                                        ×
+                                      </button>
+
+                                    </div>
+                                  )}
+                                </Draggable>
+                              ))}
+                              {/* Технический распор dnd */}
+                              {provided.placeholder}
+                            </div>
+                          )}
+                        </Droppable>
+                      </DragDropContext>
+                    </div>
+
+
+
 
                 </div>
               ))}

@@ -102,12 +102,12 @@ git pull origin main
 ### Шаг 3. Создайте файла `next/web/.env` со строкой подключения:
 ```bash
 # Команда для PowerShell:
-Copy-Item ./next-tehkarta/next/web/env.example ./next-tehkarta/next/web/.env
+Copy-Item ./next/web/env.example ./next/web/.env
 ```
 
 ```bash
 # Команда для Git Bash:
-cp ./next-tehkarta/next/web/env.example ./next-tehkarta/next/web/.env
+cp ./next/web/env.example ./next/web/.env
 ```
 
 ### Шаг 4. Автоматический перезапуск и применение изменений в Docker

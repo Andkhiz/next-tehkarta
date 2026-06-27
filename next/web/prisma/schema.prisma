@@ -37,70 +37,70 @@ model Operation {
   workplace       String?        @map("workplace")        
   equipment       String?        @map("equipment")        
   
-  nv              Float?         @map("time_standard") // норма времени
-  cuttingTools    OperationCuttingTool[]               // Режущий инструмент
-  measuringTools  OperationMeasuringTool[]             // Мерительный инструмент
-
-  rows            OperationRow[] 
+  nv              Float?         @map("time_standard")
+  rows            OperationRow[] // Операция содержит только массив строк переходов
   order           Int            
 
   @@map("operations")
 }
 
-
 // Справочник: Режущий инструмент
 model CuttingToolCatalog {
-  id          Int                    @id @default(autoincrement())
-  name        String                 @unique // Название или артикул инструмента
+  id          Int               @id @default(autoincrement())
+  name        String            @unique 
   description String?
-  operations  OperationCuttingTool[]
+  rowTools    RowCuttingTool[]  // Связь переведена на строки
 
   @@map("cutting_tool_catalog")
 }
 
 // Справочник: Мерительный инструмент
 model MeasuringToolCatalog {
-  id          Int                      @id @default(autoincrement())
-  name        String                   @unique
+  id          Int                @id @default(autoincrement())
+  name        String             @unique
   description String?
-  operations  OperationMeasuringTool[]
+  rowTools    RowMeasuringTool[] // Связь переведена на строки
 
   @@map("measuring_tool_catalog")
 }
 
-// Промежуточная таблица: Операции <-> Режущие инструменты
-model OperationCuttingTool {
-  operationId   Int         @map("operation_id")
-  cuttingToolId Int         @map("cutting_tool_id")
-  
-  operation     Operation   @relation(fields: [operationId], references: [id], onDelete: Cascade)
-  cuttingTool   CuttingToolCatalog @relation(fields: [cuttingToolId], references: [id], onDelete: Cascade)
-
-  @@id([operationId, cuttingToolId])
-  @@map("operation_cutting_tools")
-}
-
-// Промежуточная таблица: Операции <-> Мерительные инструменты
-model OperationMeasuringTool {
-  operationId     Int           @map("operation_id")
-  measuringToolId Int           @map("measuring_tool_id")
-  
-  operation       Operation     @relation(fields: [operationId], references: [id], onDelete: Cascade)
-  measuringTool   MeasuringToolCatalog @relation(fields: [measuringToolId], references: [id], onDelete: Cascade)
-
-  @@id([operationId, measuringToolId])
-  @@map("operation_measuring_tools")
-}
-
 // Строки внутри операции (Переходы, оснастка)
 model OperationRow {
-  id          Int       @id @default(autoincrement())
-  operationId Int       @map("operation_id")
-  operation   Operation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+  id             Int                @id @default(autoincrement())
+  operationId    Int                @map("operation_id")
+  operation      Operation          @relation(fields: [operationId], references: [id], onDelete: Cascade)
   
-  rowType     String    @map("row_type") 
-  text        String    
-  order       Int       
+  rowType        String             @map("row_type") 
+  text           String    
+  order          Int       
+
+  // ИНСТРУМЕНТЫ ТЕПЕРЬ ПРИВЯЗАНЫ НАПРЯМУЮ К СТРОКЕ ПЕРЕХОДА
+  cuttingTools   RowCuttingTool[]   
+  measuringTools RowMeasuringTool[] 
 
   @@map("operation_rows")
+}
+
+// Новая промежуточная таблица: Строки переходов <-> Режущие инструменты
+model RowCuttingTool {
+  id            Int                @id @default(autoincrement()) // Суррогатный ID убирает ограничение уникальности
+  rowId         Int                @map("row_id")
+  cuttingToolId Int                @map("cutting_tool_id")
+  
+  row           OperationRow       @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  cuttingTool   CuttingToolCatalog @relation(fields: [cuttingToolId], references: [id], onDelete: Cascade)
+
+  @@map("row_cutting_tools")
+}
+
+// Новая промежуточная таблица: Строки переходов <-> Мерительные инструменты
+model RowMeasuringTool {
+  id              Int                  @id @default(autoincrement()) // Суррогатный ID убирает ограничение уникальности
+  rowId           Int                  @map("row_id")
+  measuringToolId Int                  @map("measuring_tool_id")
+  
+  row             OperationRow         @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  measuringTool   MeasuringToolCatalog @relation(fields: [measuringToolId], references: [id], onDelete: Cascade)
+
+  @@map("row_measuring_tools")
 }

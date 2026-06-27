@@ -50,6 +50,7 @@ export interface RouteCardData {
   partName: string;
   material: string;
   massKg: number;
+  massZagKg: number;
   profileSize: string;
   createdAt: string;
   operations: ReportOperation[];
@@ -62,7 +63,7 @@ interface GostReportTemplateProps {
 const styles = StyleSheet.create({
   page: {
     paddingTop: 28.35,     // Верхнее поле (1 см)
-    paddingBottom: 28.35, // Нижнее поле (1 см)
+    paddingBottom: 28.65, // Нижнее поле (1 см)
     paddingLeft: 56.7,   // Левое поле (2 см)
     paddingRight: 37.14,  // Правое поле (1.31 см)
     fontFamily: 'Times New Roman',
@@ -146,8 +147,16 @@ const styles = StyleSheet.create({
     fontFamily: 'RobotoBold',
   },
   operationBlock: {},
-  rowA: { flexDirection: 'row', height: 14 },
-  rowB: { flexDirection: 'row', height: 14 },
+  rowA: { 
+    flexDirection: 'row', 
+    minHeight: 14,       // Минимальная высота по ГОСТу
+    alignItems: 'stretch' // Растягивает все ячейки строки до максимальной высоты
+  },
+  rowB: { 
+    flexDirection: 'row', 
+    minHeight: 14, 
+    alignItems: 'stretch' 
+  },
   colType: { width: '4%', textAlign: 'center', fontFamily: 'RobotoBold' },
   colNum:  { width: '6%', textAlign: 'center' },
   colName: { width: '25%' },
@@ -224,9 +233,9 @@ const styles = StyleSheet.create({
     borderColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
-    height: '100%',
+    //height: '100%',
     flexShrink: 0,
-    flexGrow: 0
+    flexGrow: 1
   },
   processCellB: {
     borderRightWidth: 0,
@@ -234,9 +243,9 @@ const styles = StyleSheet.create({
     borderColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
-    height: '100%',
+    //height: '100%',
     flexShrink: 0,
-    flexGrow: 0
+    flexGrow: 1
   },
 });
 
@@ -465,14 +474,14 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
                     <View style={{ flexDirection: 'row', height: cm(0.56) }}>
                         <View style={[styles.gostCell, { width: cm(3.05) }]}><Text></Text></View>
                         <View style={[styles.gostCell, { width: cm(1.05), alignItems: 'center' }]}><Text>кг</Text></View>
-                        <View style={[styles.gostCell, { width: cm(1.14), alignItems: 'center' }]}><Text style={{ color: '#0055aa' }}>4.53</Text></View>
-                        <View style={[styles.gostCell, { width: cm(1.06), alignItems: 'center' }]}><Text style={{ color: '#0055aa' }}>1</Text></View>
+                        <View style={[styles.gostCell, { width: cm(1.14), alignItems: 'center' }]}><Text style={{ color: '#0055aa' }}>{data.massKg}</Text></View>
+                        <View style={[styles.gostCell, { width: cm(1.06), alignItems: 'center' }]}><Text style={{ color: '#0055aa' }}></Text></View>
                         <View style={[styles.gostCell, { width: cm(1.17)}]}><Text></Text></View>
                         <View style={[styles.gostCell, { width: cm(1.28)}]}><Text></Text></View>
-                        <View style={[styles.gostCell, { width: cm(2.45), alignItems: 'center' }]}><Text style={{ color: '#0055aa' }}>Круг</Text></View>
+                        <View style={[styles.gostCell, { width: cm(2.45), alignItems: 'center' }]}><Text style={{ color: '#0055aa' }}></Text></View>
                         <View style={[styles.gostCell, { width: cm(5.84), alignItems: 'center' }]}><Text style={{ color: '#0055aa' }}>{data.profileSize}</Text></View>
-                        <View style={[styles.gostCell, { width: cm(2.12), alignItems: 'center' }]}><Text style={{ color: '#0055aa' }}>1</Text></View>
-                        <View style={[styles.gostCell, { width: cm(2.09)}]}><Text></Text></View>
+                        <View style={[styles.gostCell, { width: cm(2.12), alignItems: 'center' }]}><Text style={{ color: '#0055aa' }}></Text></View>
+                        <View style={[styles.gostCell, { width: cm(2.09), alignItems: 'center' }]}><Text>{data.massZagKg}</Text></View>
                     </View>
                 </View>
             </View>
@@ -550,7 +559,7 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
       {(() => {
         globalLineCount++;
         return (
-          <View style={{ flexDirection: 'row', height: cm(0.63) }}>
+          <View style={{ flexDirection: 'row', minHeight: cm(0.63), alignItems: 'stretch' }} wrap={false}>
             <View style={[styles.processCellB, { width: cm(0.4), fontSize: 10, borderLeftWidth: 1 }]}><Text>А</Text></View>
             <View style={[styles.processCell, { width: cm(0.8), fontSize: 10 }]}><Text>{formatNum(globalLineCount)}</Text></View>
             <View style={[styles.processCell, { width: cm(0.9) }]}><Text></Text></View>
@@ -581,7 +590,7 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
       {operation.workplace && (() => {
         globalLineCount++;
         return (
-          <View style={{ flexDirection: 'row', height: cm(0.63) }}>
+          <View style={{ flexDirection: 'row', minHeight: cm(0.63), alignItems: 'stretch' }} wrap={false}>
             <View style={[styles.processCellB, { width: cm(0.4), fontSize: 10, borderLeftWidth: 1}]}><Text>Б</Text></View>
             <View style={[styles.processCell, { width: cm(0.8), fontSize: 10 }]}><Text>{formatNum(globalLineCount)}</Text></View>
             <View style={[styles.processCell, { width: cm(10.48), alignItems: 'flex-start', paddingLeft: 6, fontSize: 10 }]}>
@@ -608,7 +617,7 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
       {operation.equipment && operation.equipment.trim() !== "" && (() => {
         globalLineCount++;
         return (
-          <View style={{ flexDirection: 'row', height: cm(0.63) }}>
+          <View style={{ flexDirection: 'row', minHeight: cm(0.63), alignItems: 'stretch' }} wrap={false}>
             <View style={[styles.processCellB, { width: cm(0.4), fontSize: 10, borderLeftWidth: 1 }]}><Text>Б</Text></View>
             <View style={[styles.processCell, { width: cm(0.8), fontSize: 10 }]}><Text>{formatNum(globalLineCount)}</Text></View>
             <View style={[styles.processCell, { width: cm(10.48), alignItems: 'flex-start', paddingLeft: 6, fontSize: 10 }]}>
@@ -635,7 +644,7 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
       {operation.rows?.map((row) => {
         globalLineCount++;
         return (
-          <View key={row.id} style={{ flexDirection: 'row', height: cm(0.63) }}>
+          <View key={row.id} style={{ flexDirection: 'row', minHeight: cm(0.63), alignItems: 'stretch' }} wrap={false}>
             <View style={[styles.processCellB, { width: cm(0.4), fontSize: 10, borderLeftWidth: 1 }]}><Text>Б</Text></View>
             <View style={[styles.processCell, { width: cm(0.8), fontSize: 10 }]}><Text>{formatNum(globalLineCount)}</Text></View>
             <View style={[styles.processCell, { width: cm(10.48), alignItems: 'flex-start', paddingLeft: 6, fontSize: 10 }]}>
