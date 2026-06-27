@@ -9,7 +9,8 @@ export default async function ReportsPage() {
     documentNumber: "222",
     partName: "Деталь 222",
     material: "Сталь 45 ГОСТ 1051-73",
-    massKg: 222,
+    massKg: 0,
+    massZagKg: 0,
     profileSize: "Круг Ø20 L=1873",
     createdAt: "2026-06-18T18:48:54.737Z",
     operations: [
