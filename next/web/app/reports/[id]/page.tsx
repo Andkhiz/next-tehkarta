@@ -2,8 +2,6 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import ClientReportWrapper from '../../components/ClientReportWrapper';
 import { RouteCardData } from '../../components/GostReportTemplate';
-// Импортируем ваш существующий клиент Prisma. 
-// Если путь отличается, замените на ваш (например, import prisma from '@/lib/prisma')
 import { prisma } from '../../db'; 
 
 interface PageProps {
@@ -19,14 +17,27 @@ export default async function ReportsPage({ params }: PageProps) {
     return notFound();
   }
 
-  // 2. Делаем запрос в базу данных PostgreSQL через Prisma
+  // 2. Делаем глубокий запрос в БД с сортировкой по order
   const routeCard = await prisma.routeCard.findUnique({
     where: { id: cardId },
     include: {
       operations: {
-        orderBy: { order: 'asc' },
+        orderBy: { order: 'asc' as const },
         include: {
-          rows: { orderBy: { order: 'asc' } }
+          rows: { 
+            orderBy: { order: 'asc' as const },
+            // КРИТИЧЕСКИ ВАЖНО: Тянем мерительные и режущие инструменты для каждой строки отчёта
+            include: {
+              cuttingTools: {
+                orderBy: { order: 'asc' as const },
+                include: { cuttingTool: true }
+              },
+              measuringTools: {
+                orderBy: { order: 'asc' as const },
+                include: { measuringTool: true }
+              }
+            }
+          }
         }
       }
     }
@@ -40,7 +51,7 @@ export default async function ReportsPage({ params }: PageProps) {
   // Приводим тип из Prisma к интерфейсу нашего шаблона
   const reportData = routeCard as unknown as RouteCardData;
 
-  // 3. Отдаем данные в визуальную обертку отчета
+  // 3. Отдаем обогащенные данными инструменты в визуальную обертку отчета
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
       <h1 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px' }}>

@@ -10,33 +10,32 @@ export async function GET(request: Request) {
     // 1. Если запросили конкретную карту по ID
     if (cardId) {
       const card = await prisma.routeCard.findUnique({
-        where: { id: parseInt(cardId) },
+        where: { 
+          id: parseInt(cardId) 
+        },
         include: {
           operations: {
-            orderBy: { order: 'asc' },
-            include: { 
-              // ИЗМЕНЕНО: Запрашиваем строки и рекурсивно подтягиваем инструменты ДЛЯ КАЖДОЙ СТРОКИ
+            orderBy: { order: 'asc' as const },
+            include: {
               rows: {
-                orderBy: { order: 'asc' },
+                orderBy: { order: 'asc' as const },
+                // КРИТИЧЕСКИ ВАЖНО: инструменты внутри rows ВСЕГДА лежат в include!
                 include: {
-                  // Загрузка режущих инструментов для этой строки
                   cuttingTools: {
-                    include: {
-                      cuttingTool: true
-                    }
+                    orderBy: { order: 'asc' as const },
+                    include: { cuttingTool: true }
                   },
-                  // Загрузка мерительных инструментов для этой строки
                   measuringTools: {
-                    include: {
-                      measuringTool: true
-                    }
+                    orderBy: { order: 'asc' as const },
+                    include: { measuringTool: true }
                   }
                 }
               }
-            },
+            }
           }
         }
-      })
+      });
+
       return NextResponse.json({ success: true, data: card })
     }
 
@@ -93,20 +92,25 @@ export async function POST(request: Request) {
             
             // Создаем связи с режущими инструментами ДЛЯ КОНКРЕТНОЙ СТРОКИ
             cuttingTools: {
-              create: (row.cuttingTools || []).map((ct: any) => ({
-                cuttingTool: {
-                  connect: { id: Number(ct.cuttingToolId || ct.id) }
-                }
-              }))
+              create: (row.cuttingTools || [])
+                .filter((ct: any) => ct.cuttingToolId || ct.id)
+                .map((ct: any, toolIdx: number) => ({ // <--- Добавили индекс
+                  order: toolIdx,                     // <--- Записываем порядок в базу
+                  cuttingTool: {
+                    connect: { id: Number(ct.cuttingToolId || ct.id) }
+                  }
+                }))
             },
-
             // Создаем связи с мерительными инструментами ДЛЯ КОНКРЕТНОЙ СТРОКИ
             measuringTools: {
-              create: (row.measuringTools || []).map((mt: any) => ({
-                measuringTool: {
-                  connect: { id: Number(mt.measuringToolId || mt.id) }
-                }
-              }))
+              create: (row.measuringTools || [])
+                .filter((mt: any) => mt.measuringToolId || mt.id)
+                .map((mt: any, toolIdx: number) => ({ // <--- Добавили индекс
+                  order: toolIdx,                     // <--- Записываем порядок в базу
+                  measuringTool: {
+                    connect: { id: Number(mt.measuringToolId || mt.id) }
+                  }
+                }))
             }
           }))
         }
@@ -122,8 +126,14 @@ export async function POST(request: Request) {
           rows: {
             orderBy: { order: 'asc' as const },
             include: {
-              cuttingTools: { include: { cuttingTool: true } },
-              measuringTools: { include: { measuringTool: true } }
+              cuttingTools: { 
+                orderBy: { order: 'asc' as const }, 
+                include: { cuttingTool: true }  
+              },
+              measuringTools: { 
+                orderBy: { order: 'asc' as const }, 
+                include: { measuringTool: true }  
+              }
             }
           }
         }

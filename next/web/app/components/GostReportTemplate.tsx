@@ -235,7 +235,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     //height: '100%',
     flexShrink: 0,
-    flexGrow: 1
+    flexGrow: 1,
+    fontFamily: 'Times New Roman'
   },
   processCellB: {
     borderRightWidth: 0,
@@ -245,7 +246,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     //height: '100%',
     flexShrink: 0,
-    flexGrow: 1
+    flexGrow: 1,
+    fontFamily: 'Times New Roman'
   },
 });
 
@@ -642,30 +644,113 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
 
       {/* ================= СТРОКИ Б: ВЛОЖЕННЫЕ ПЕРЕХОДЫ ИЗ МАССИВА ROWS ================= */}
       {operation.rows?.map((row) => {
+        // Увеличиваем счетчик для основной строки перехода
         globalLineCount++;
+
+        const measuringTools = (row as any).measuringTools || [];
+ 
         return (
-          <View key={row.id} style={{ flexDirection: 'row', minHeight: cm(0.63), alignItems: 'stretch' }} wrap={false}>
-            <View style={[styles.processCellB, { width: cm(0.4), fontSize: 10, borderLeftWidth: 1 }]}><Text>Б</Text></View>
-            <View style={[styles.processCell, { width: cm(0.8), fontSize: 10 }]}><Text>{formatNum(globalLineCount)}</Text></View>
-            <View style={[styles.processCell, { width: cm(10.48), alignItems: 'flex-start', paddingLeft: 6, fontSize: 10 }]}>
-              <Text>{row.text || ' '}</Text>
-            </View>
+            <React.Fragment key={row.id}>
             
-            {/* РАЗБИВАЕМ ПРАВУЮ СТРОКУ Б НА СЕТКУ НОРМАТИВОВ */}
-            <View style={[styles.processCell, { width: cm(1.15) }]}><Text></Text></View>
-            <View style={[styles.processCell, { width: cm(1.44) }]}><Text></Text></View>
-            <View style={[styles.processCell, { width: cm(0.93) }]}><Text></Text></View>
-            <View style={[styles.processCell, { width: cm(1.15) }]}><Text></Text></View>
-            <View style={[styles.processCell, { width: cm(0.93) }]}><Text></Text></View>
-            <View style={[styles.processCell, { width: cm(1.39) }]}><Text></Text></View>
-            <View style={[styles.processCell, { width: cm(1.37) }]}><Text></Text></View>
-            <View style={[styles.processCell, { width: cm(1.01) }]}><Text></Text></View>
-            <View style={[styles.processCell, { width: cm(2.36) }]}><Text></Text></View>
-            <View style={[styles.processCell, { width: cm(2.04) }]}><Text></Text></View>
-            <View style={[styles.processCell, { width: cm(1.4) }]}><Text></Text></View>
-          </View>
+            {/* 1. ОСНОВНАЯ СТРОКА ПЕРЕХОДА (Ваш исходный код) */}
+            <View style={{ flexDirection: 'row', minHeight: cm(0.63), alignItems: 'stretch', fontFamily: 'Times New Roman' }} wrap={false}>
+                <View style={[styles.processCellB, { width: cm(0.4), fontSize: 10, borderLeftWidth: 1 }]}><Text>Б</Text></View>
+                <View style={[styles.processCell, { width: cm(0.8), fontSize: 10 }]}><Text>{formatNum(globalLineCount)}</Text></View>
+                <View style={[styles.processCell, { width: cm(10.48), alignItems: 'flex-start', paddingLeft: 6, fontSize: 10 }]}>
+                <Text>{row.text || ' '}</Text>
+                </View>
+                
+                {/* РАЗБИВАЕМ ПРАВУЮ СТРОКУ Б НА СЕТКУ НОРМАТИВОВ */}
+                <View style={[styles.processCell, { width: cm(1.15) }]}><Text></Text></View>
+                <View style={[styles.processCell, { width: cm(1.44) }]}><Text></Text></View>
+                <View style={[styles.processCell, { width: cm(0.93) }]}><Text></Text></View>
+                <View style={[styles.processCell, { width: cm(1.15) }]}><Text></Text></View>
+                <View style={[styles.processCell, { width: cm(0.93) }]}><Text></Text></View>
+                <View style={[styles.processCell, { width: cm(1.39) }]}><Text></Text></View>
+                <View style={[styles.processCell, { width: cm(1.37) }]}><Text></Text></View>
+                <View style={[styles.processCell, { width: cm(1.01) }]}><Text></Text></View>
+                <View style={[styles.processCell, { width: cm(2.36) }]}><Text></Text></View>
+                <View style={[styles.processCell, { width: cm(2.04) }]}><Text></Text></View>
+                <View style={[styles.processCell, { width: cm(1.4) }]}><Text></Text></View>
+            </View>
+
+                        {/* 2. ПОСТРОЧНЫЙ ВЫВОД МЕРИТЕЛЬНОГО ИНСТРУМЕНТА СРАЗУ ПОСЛЕ ПЕРЕХОДА */}
+                        {measuringTools.map((mt: any, mtIdx: number) => {
+                            globalLineCount++;
+
+                            const rawName = mt.measuringTool?.name || mt.name || '';
+                            const cleanedToolName = rawName.replace(/^"|"$/g, '').replace(/\\"/g, '"');
+
+                            if (!cleanedToolName) return null;
+
+                            // Внутренний объект для одинаковых стилей пустых правых ячеек нормирования
+                            const rightCellOption = {
+                            borderRightWidth: 1,
+                            borderBottomWidth: 1,
+                            borderColor: '#000000',
+                            minHeight: cm(0.63) // Позволяет правым ячейкам растягиваться вслед за текстом инструмента
+                            };
+
+                            return (
+                            <View 
+                                key={mt.id || mtIdx} 
+                                style={{ 
+                                flexDirection: 'row', 
+                                minHeight: cm(0.63), // Убрали жесткий height, оставили только минимальную высоту
+                                alignItems: 'stretch', // Принудительно растягивает все ячейки строки до высоты самой высокой из них
+                                width: '100%'
+                                }} 
+                                wrap={false}
+                            >
+                                {/* Ячейка кода строки Б (УБРАЛИ borderRightWidth: 1, чтобы не было подчеркивания справа от Б) */}
+                                <View style={{ width: cm(0.4), fontSize: 10, borderLeftWidth: 1, borderBottomWidth: 1, borderColor: '#000000', borderRightWidth: 0, justifyContent: 'center', alignItems: 'center', fontFamily: 'Times New Roman' }}>
+                                <Text>Б</Text>
+                                </View>
+
+                                {/* Ячейка номера строки */}
+                                <View style={{ width: cm(0.8), fontSize: 10, borderBottomWidth: 1, borderColor: '#000000', borderRightWidth: 1, justifyContent: 'center', alignItems: 'center', fontFamily: 'Times New Roman' }}>
+                                <Text>{formatNum(globalLineCount)}</Text>
+                                </View>
+                                
+                                {/* Ячейка НАЗВАНИЯ ИНСТРУМЕНТА (Разрешаем перенос длинного текста на новые строки) */}
+                                <View style={{ 
+                                width: cm(10.48), 
+                                borderBottomWidth: 1, 
+                                borderColor: '#000000', 
+                                borderRightWidth: 1,
+                                alignItems: 'flex-start', 
+                                justifyContent: 'center', 
+                                paddingLeft: 6, 
+                                paddingTop: 3,     // Добавили небольшие внутренние отступы сверху и снизу, 
+                                paddingBottom: 3,  // чтобы перенесенный текст не прилипал к границам рамки
+                                fontSize: 10, 
+                                fontFamily: 'Times New Roman',
+                                flexWrap: 'wrap'   // Разрешает тексту внутри переноситься на новые строчки
+                                }}>
+                                <Text style={{ width: '100%' }}>{cleanedToolName}</Text>
+                                </View>
+                                
+                                {/* Идеальная по размерам сетка нормативов справа */}
+                                <View style={[rightCellOption, { width: cm(1.15) }]}><Text></Text></View>
+                                <View style={[rightCellOption, { width: cm(1.44) }]}><Text></Text></View>
+                                <View style={[rightCellOption, { width: cm(0.93) }]}><Text></Text></View>
+                                <View style={[rightCellOption, { width: cm(1.15) }]}><Text></Text></View>
+                                <View style={[rightCellOption, { width: cm(0.93) }]}><Text></Text></View>
+                                <View style={[rightCellOption, { width: cm(1.39) }]}><Text></Text></View>
+                                <View style={[rightCellOption, { width: cm(1.37) }]}><Text></Text></View>
+                                <View style={[rightCellOption, { width: cm(1.01) }]}><Text></Text></View>
+                                <View style={[rightCellOption, { width: cm(2.36) }]}><Text></Text></View>
+                                <View style={[rightCellOption, { width: cm(2.04) }]}><Text></Text></View>
+                                <View style={[rightCellOption, { width: cm(1.4) }]}><Text></Text></View>
+                            </View>
+                            );
+                        })}
+
+
+
+            </React.Fragment>
         );
-      })}
+        })}
 
     </View>
   ));

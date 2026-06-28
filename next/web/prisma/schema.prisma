@@ -86,6 +86,7 @@ model RowCuttingTool {
   id            Int                @id @default(autoincrement()) // Суррогатный ID убирает ограничение уникальности
   rowId         Int                @map("row_id")
   cuttingToolId Int                @map("cutting_tool_id")
+  order         Int                @default(0)
   
   row           OperationRow       @relation(fields: [rowId], references: [id], onDelete: Cascade)
   cuttingTool   CuttingToolCatalog @relation(fields: [cuttingToolId], references: [id], onDelete: Cascade)
@@ -98,9 +99,12 @@ model RowMeasuringTool {
   id              Int                  @id @default(autoincrement()) // Суррогатный ID убирает ограничение уникальности
   rowId           Int                  @map("row_id")
   measuringToolId Int                  @map("measuring_tool_id")
+  order         Int                @default(0)
   
   row             OperationRow         @relation(fields: [rowId], references: [id], onDelete: Cascade)
   measuringTool   MeasuringToolCatalog @relation(fields: [measuringToolId], references: [id], onDelete: Cascade)
 
+  // Гарантирует, что один инструмент нельзя добавить в один переход дважды
+  @@unique([rowId, measuringToolId]) 
   @@map("row_measuring_tools")
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { MeasuringToolSelect } from './components/MeasuringToolSelect';
 
 // 1. Полные интерфейсы для типизации с учетом новых полей и таблиц-справочников
 
@@ -111,9 +112,13 @@ export default function Home() {
           workplace: op.workplace || '',
           equipment: op.equipment || '',
           nv: op.nv !== null && op.nv !== undefined ? op.nv.toString() : '',
-          cuttingTools: op.cuttingTools || [],
-          measuringTools: op.measuringTools || [],
-          rows: op.rows.map((r: any) => ({ type: r.rowType, text: r.text }))
+          rows: op.rows.map((r: any) => ({ 
+            type: r.rowType, 
+            text: r.text,
+            // Переносим инструменты внутрь конкретной строки, куда их прислала БД:
+            cuttingTools: r.cuttingTools || [],
+            measuringTools: r.measuringTools || []
+          }))
         })))
       }
     } catch (err) { 
@@ -125,7 +130,7 @@ export default function Home() {
   useEffect(() => {
     async function init() {
       try {
-        await loadCuttingCatalog() // Сначала загружаем справочник инструментов
+        //await loadCuttingCatalog() // Сначала загружаем справочник инструментов
         const res = await fetch('/api/tehkarta')
         const result = await res.json()
         if (result.success && result.data.length > 0) {
@@ -266,6 +271,7 @@ const handleRowDrop = (opIndex: number, result: any) => {
   const filteredCardsList = cardsList.filter(card =>
     card.documentNumber.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
   return (
     <main className="min-h-screen bg-gray-50 flex text-black">
       
@@ -390,94 +396,6 @@ const handleRowDrop = (opIndex: number, result: any) => {
                     </div>
                   </div>
 
-                  {/* Оснащение выведено до переходов «О» */}
-                  {/*<div className="p-3 bg-gray-50 rounded border border-gray-100 space-y-3">
-                    <span className="text-[11px] font-bold text-gray-400 block uppercase tracking-wider">Технологическое оснащение</span>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Выбор режущего инструмента }
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">Режущий инструмент</label>
-                        <select 
-                          className="w-full p-2 border rounded bg-white text-xs"
-                          value=""
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (!val) return;
-                            if (!op.cuttingTools?.some((t: any) => Number(t.cuttingToolId) === Number(val))) {
-                              const updatedTools = [...(op.cuttingTools || []), { cuttingToolId: Number(val) }];
-                              handleOpChange(opIdx, 'cuttingTools', updatedTools);
-                            }
-                          }}
-                        >
-                          <option value="">-- Выбрать из исходника --</option>
-                          {cuttingCatalog.map(tool => (
-                            <option key={tool.id} value={tool.id}>{tool.name}</option>
-                          ))}
-                        </select>
-
-                        {/* Бейджи выбранных режущих инструментов }
-                        <div className="mt-1.5 flex flex-wrap gap-1">
-                          {op.cuttingTools?.map((ct: any, idx: number) => {
-                            const found = cuttingCatalog.find(c => c.id === ct.cuttingToolId);
-                            return (
-                              <span key={idx} className="text-[11px] bg-blue-50 text-blue-600 border border-blue-100 px-2 py-0.5 rounded flex items-center gap-1">
-                                {found ? found.name : `ID: ${ct.cuttingToolId}`}
-                                <button type="button" className="hover:text-red-500 font-bold ml-0.5" onClick={() => {
-                                  const filtered = op.cuttingTools.filter((_, i) => i !== idx);
-                                  handleOpChange(opIdx, 'cuttingTools', filtered);
-                                }}>×</button>
-                              </span>
-                            )
-                          })}
-                        </div>
-                      </div>
-                      {/* Мерительный инструмент }
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">Мерительный инструмент</label>
-                        <input 
-                          type="text"
-                          placeholder="Ввод вручную (нажмите Enter)..."
-                          className="w-full p-2 border rounded bg-white text-xs focus:outline-none"
-                          onKeyDown={async (e) => {
-                            if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                              e.preventDefault();
-                              const text = e.currentTarget.value.trim();
-                              
-                              try {
-                                const res = await fetch('/api/tools/measuring', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ name: text })
-                                });
-                                const result = await res.json();
-                                if (result.success && result.data) {
-                                  const updatedTools = [...(op.measuringTools || []), { measuringToolId: result.data.id, measuringTool: { name: text } }];
-                                  handleOpChange(opIdx, 'measuringTools', updatedTools);
-                                  e.currentTarget.value = '';
-                                }
-                              } catch (err) { console.error('Ошибка добавления мерительного инструмента:', err) }
-                            }
-                          }}
-                        />
-
-                        {/* Бейджи мерительных инструментов }
-                        <div className="mt-1.5 flex flex-wrap gap-1">
-                          {op.measuringTools?.map((mt: any, idx: number) => (
-                            <span key={idx} className="text-[11px] bg-green-50 text-green-600 border border-green-100 px-2 py-0.5 rounded flex items-center gap-1">
-                              {mt.measuringTool?.name || mt.name || `ID: ${mt.measuringToolId}`}
-                              <button type="button" className="hover:text-red-500 font-bold ml-0.5" onClick={() => {
-                                const filtered = op.measuringTools.filter((_, i) => i !== idx);
-                                handleOpChange(opIdx, 'measuringTools', filtered);
-                              }}>×</button>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div> */}
-
-                  {/* Блок переходов (строк О) с плотной сеткой инструментов */}
                     {/* Блок переходов (строк О) с плотной сеткой инструментов и Drag and Drop */}
                     <div className="pl-4 border-l-2 border-gray-200 space-y-1">
                       <div className="flex justify-between items-center mb-0.5">
@@ -556,54 +474,65 @@ const handleRowDrop = (opIndex: number, result: any) => {
                                         </button>
 
                                         {/* Если массив пуст, по умолчанию показываем один инпут */}
+                                        {/* Если массив пуст, по умолчанию показываем один инпут с выбором */}
                                         {(!row.measuringTools || row.measuringTools.length === 0) ? (
-                                          <div className="flex items-center border rounded bg-white shadow-sm h-[24px] pr-1 focus-within:border-green-400 transition-colors w-full">
-                                            <input
-                                              type="text"
-                                              placeholder="Инструмент..."
+                                          <div className="w-full">
+                                            <MeasuringToolSelect
                                               value=""
-                                              onChange={(e) => {
+                                              onChange={(toolName, toolId) => {
                                                 const updatedOps = [...operations];
+                                                // Записываем инструмент, сохраняя структуру для БД (id и name)
                                                 updatedOps[opIdx].rows[rowIdx].measuringTools = [
-                                                  { name: e.target.value, measuringTool: { name: e.target.value } }
+                                                  { 
+                                                    id: toolId,               // <--- СОХРАНЯЕМ ID ТУТ
+                                                    measuringToolId: toolId,  // <--- СОХРАНЯЕМ ID ТУТ
+                                                    name: toolName,
+                                                    measuringTool:  { name: toolName } 
+                                                  }
                                                 ];
                                                 setOperations(updatedOps);
                                               }}
-                                              className="w-full px-2 py-0.5 text-xs bg-transparent focus:outline-none"
                                             />
                                           </div>
                                         ) : (
                                           /* Мапим инструменты вертикальной стопкой */
-                                          row.measuringTools.map((mt, mtIdx) => (
-                                            <div key={mtIdx} className="flex items-center border rounded bg-white shadow-sm h-[24px] pr-1 focus-within:border-green-400 transition-colors w-full">
-                                              <input
-                                                type="text"
-                                                placeholder="Инструмент..."
-                                                value={mt.measuringTool?.name || mt.name || ''}
-                                                onChange={(e) => {
-                                                  const updatedOps = [...operations];
-                                                  updatedOps[opIdx].rows[rowIdx].measuringTools[mtIdx] = {
-                                                    ...updatedOps[opIdx].rows[rowIdx].measuringTools[mtIdx],
-                                                    name: e.target.value,
-                                                    measuringTool: { name: e.target.value }
-                                                  };
-                                                  setOperations(updatedOps);
-                                                }}
-                                                className="w-full px-2 py-0.5 text-xs bg-transparent focus:outline-none"
-                                              />
-                                              <button
-                                                type="button"
-                                                onClick={() => {
-                                                  const updatedOps = [...operations];
-                                                  updatedOps[opIdx].rows[rowIdx].measuringTools = row.measuringTools.filter((_, i) => i !== mtIdx);
-                                                  setOperations(updatedOps);
-                                                }}
-                                                className="text-gray-400 hover:text-red-500 font-bold text-xs px-0.5"
-                                              >
-                                                ×
-                                              </button>
-                                            </div>
-                                          ))
+                                          <div className="flex flex-col gap-1 w-full">
+                                            {row.measuringTools.map((mt, mtIdx) => (
+                                              <div key={mtIdx} className="flex items-center border rounded bg-white shadow-sm h-[24px] pr-1 focus-within:border-green-400 transition-colors w-full">
+                                                
+                                                {/* Поле выбора с фильтрацией */}
+                                                <div className="w-full">
+                                                  <MeasuringToolSelect
+                                                    value={mt.measuringTool?.name || mt.name || ''}
+                                                    onChange={(toolName, toolId) => {
+                                                      const updatedOps = [...operations];
+                                                      // Обновляем конкретный инструмент в массиве строки
+                                                      updatedOps[opIdx].rows[rowIdx].measuringTools[mtIdx] = {
+                                                        ...updatedOps[opIdx].rows[rowIdx].measuringTools[mtIdx],
+                                                        id: toolId,               // <--- СОХРАНЯЕМ ID ТУТ
+                                                        measuringToolId: toolId,  // <--- СОХРАНЯЕМ ID ТУТ
+                                                        name: toolName,
+                                                        measuringTool: { name: toolName }
+                                                      };
+                                                      setOperations(updatedOps);
+                                                    }}
+                                                  />
+                                                </div>
+
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    const updatedOps = [...operations];
+                                                    updatedOps[opIdx].rows[rowIdx].measuringTools = row.measuringTools.filter((_, i) => i !== mtIdx);
+                                                    setOperations(updatedOps);
+                                                  }}
+                                                  className="text-gray-400 hover:text-red-500 font-bold text-xs px-1 z-10"
+                                                >
+                                                  ×
+                                                </button>
+                                              </div>
+                                            ))}
+                                          </div>
                                         )}
                                       </div>
 
