@@ -130,3 +130,20 @@ docker compose up -d
 3. **Веб-приложение (`web_app`)** — Docker Compose автоматически пересобирает и запускает контейнер Next.js строго после того, как контейнер миграций завершит свою работу. Приложение сразу готово к работе с обновленной структурой базы.
 
 > 💡 **Важно:** Больше не требуется вручную заходить внутрь контейнеров и выполнять команды `exec` для накатывания таблиц. Весь процесс полностью автоматизирован на уровне манифеста Docker Compose.
+
+---
+## Создание резервной копии (Бэкап)
+
+**Для Windows (PowerShell):**
+```powershell
+\$env:PGPASSWORD="mysecretpassword"; docker exec -t nextjs_postgres_db pg_dump -U myuser my_next_db > backup.sql
+```
+### ⚙️ Как это работает под капотом:
+**Создается файл backup.sql со всеми объектами и данными базы данных.
+
+## Восстановление данных из бэкапа
+
+**Для Windows (PowerShell):**
+```powershell
+\$env:PGPASSWORD="mysecretpassword"; docker exec -i nextjs_postgres_db psql -U myuser -d my_next_db < backup.sql
+```
