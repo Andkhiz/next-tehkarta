@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { MeasuringToolSelect } from './components/MeasuringToolSelect';
+import MeasuringToolsModal from './api/measuring-tools/MeasuringToolsModal';
 
 // 1. Полные интерфейсы для типизации с учетом новых полей и таблиц-справочников
 
@@ -53,6 +54,8 @@ export default function Home() {
 
   // Справочник режущего инструмента (подгружается автоматически с сервера)
   const [cuttingCatalog, setCuttingCatalog] = useState<ToolCatalogItem[]>([])
+  const [isMeasuringCatalogOpen, setIsMeasuringCatalogOpen] = useState(false);
+
 
   // Состояния для полей формы технологической карты (Шапка)
   const [docNumber, setDocNumber] = useState('')
@@ -592,9 +595,23 @@ const handleRowDrop = (opIndex: number, result: any) => {
       <div className="w-80 border-l border-gray-200 bg-white p-4 overflow-y-auto max-h-screen">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-bold text-gray-700 text-xs uppercase tracking-wider">Перечень техкарт</h3>
-          <button type="button" onClick={() => {startNewCard()}} className="px-2 py-1 bg-emerald-600 text-white rounded text-[11px] font-medium hover:bg-emerald-700 transition">
-            Новый бланк
-          </button>
+          <div className="flex gap-1.5">
+            {/* НОВАЯ КНОПКА: Справочник мерительного инструмента */}
+            <button 
+              type="button" 
+              onClick={() => setIsMeasuringCatalogOpen(true)} 
+              className="px-2 py-1 bg-gray-600 text-white rounded text-[11px] font-medium hover:bg-gray-700 transition"
+            >
+              Справочник
+            </button>
+            <button 
+              type="button" 
+              onClick={() => {startNewCard()}} 
+              className="px-2 py-1 bg-emerald-600 text-white rounded text-[11px] font-medium hover:bg-emerald-700 transition"
+            >
+              Новый бланк
+            </button>
+          </div>
         </div>
         
         <input type="text" placeholder="Поиск по номеру документа..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full p-2 border rounded mb-4 text-xs bg-white focus:outline-none focus:border-blue-500" />
@@ -608,7 +625,11 @@ const handleRowDrop = (opIndex: number, result: any) => {
           ))}
           {filteredCardsList.length === 0 && <div className="text-xs text-gray-400 text-center py-4">Документы не найдены</div>}
         </div>
+
+        {/* РЕНДЕР МОДАЛЬНОГО ОКНА (Вставляется здесь или в самом низу вашего JSX) */}
+        <MeasuringToolsModal isOpen={isMeasuringCatalogOpen} onClose={() => setIsMeasuringCatalogOpen(false)} />
       </div>
+
 
     </main>
   )
