@@ -1,49 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { MeasuringToolSelect } from './components/MeasuringToolSelect';
-import MeasuringToolsModal from './api/measuring-tools/MeasuringToolsModal';
+import { TechCardFormBody } from './components/TechCardFormBody';
+import { TechCardSidebar } from './components/TechCardSidebar';
 
 // 1. Полные интерфейсы для типизации с учетом новых полей и таблиц-справочников
+import { Operation, CardListItem, ToolCatalogItem } from './types/types';
 
-interface ToolRelation { 
-  id?: number; 
-  cuttingToolId?: number; 
-  measuringToolId?: number; 
-  cuttingTool?: { name: string }; 
-  measuringTool?: { name: string };
-  name?: string;   // Для временного хранения ручного ввода до сохранения
-  rowKey?: string; // Временный ключ для удобной привязки инструментов в UI-компонентах
-}
-
-interface OperationRow { 
-  type: string; 
-  text: string;
-  cuttingTools: ToolRelation[];   // ИЗМЕНЕНО: Режущий инструмент теперь привязан к строке перехода
-  measuringTools: ToolRelation[]; // ИЗМЕНЕНО: Мерительный инструмент теперь привязан к строке перехода
-}
-
-interface Operation {
-  operation_number: string
-  operation_name: string
-  workplace: string
-  equipment: string
-  nv: string // На фронтенде храним строкой для удобства работы <input type="number">
-  rows: OperationRow[] // ИЗМЕНЕНО: Массивы инструментов удалены из корня операции
-}
-
-interface CardListItem { 
-  id: number; 
-  documentNumber: string; 
-  partName: string 
-}
-
-interface ToolCatalogItem { 
-  id: number; 
-  name: string 
-}
 
 
 export default function Home() {
@@ -183,11 +146,11 @@ export default function Home() {
   ])
 
   // Обновление текстовых полей и массивов инструментов внутри операции
-  const handleOpChange = (index: number, field: keyof Operation, value: any) => {
+  const handleOpChange = (index: number, field: string, value: any) => {
     const updated = [...operations]; 
     updated[index] = { ...updated[index], [field]: value }; 
-    setOperations(updated)
-  }
+    setOperations(updated);
+  };
 
   // Добавление новой строки перехода "О" к конкретной операции
   const addRowToOp = (opIndex: number) => { 
@@ -278,357 +241,38 @@ const handleRowDrop = (opIndex: number, result: any) => {
   return (
     <main className="min-h-screen bg-gray-50 flex text-black">
       
-      {/* ЛЕВАЯ ЧАСТЬ: ОСНОВНАЯ ФОРМА ТЕХКАРТЫ */}
-      <div className="flex-1 p-8 overflow-y-auto max-h-screen">
-        <div className="max-w-8xl mx-auto bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          
-          {/* Контейнер заголовка */}
-          <div className="relative flex items-center justify-center w-full mb-6">
-            <h1 className="text-xl font-bold text-center text-gray-800">
-              Технологическая карта (ГОСТ 3.1118-82)
-            </h1>
-
-            {selectedCardId && (
-              <div className="absolute right-0">
-                <Link 
-                  href={`/reports/${selectedCardId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold px-4 py-1.5 rounded transition shadow-sm cursor-pointer"
-                >
-                  <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.8A8.004 8.004 0 0112 4.5c4.14 0 7.5 3.36 7.5 7.5a7.94 7.94 0 01-1.464 4.542m-12.072 0H19.5" />
-                  </svg>
-                  Печать
-                </Link>
-              </div>
-            )}
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            
-            <div className="grid grid-cols-6 gap-4 bg-gray-50 p-4 rounded border border-gray-100">
-            {/* Заголовок на всю ширину (6 колонок) */}
-            <h2 className="col-span-6 font-semibold text-gray-700 text-sm">Шапка документа</h2>
-            
-            {/* ПЕРВЫЙ РЯД: Ровно пополам (по 3 колонки из 6) */}
-            <div className="col-span-3">
-              <label className="block text-xs text-gray-400 mb-1">Номер документа</label>
-              <input type="text" value={docNumber} onChange={e => setDocNumber(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
-            </div>
-            
-            <div className="col-span-3">
-              <label className="block text-xs text-gray-400 mb-1">Наименование детали</label>
-              <input type="text" value={partName} onChange={e => setPartName(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
-            </div>
-            
-            {/* ВТОРОЙ РЯД: Материал на всю ширину (6 колонок) */}
-            <div className="col-span-6">
-              <label className="block text-xs text-gray-400 mb-1">Материал</label>
-              <input type="text" value={material} onChange={e => setMaterial(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
-            </div>
-            
-            {/* ТРЕТИЙ РЯД: Три поля в ряд (каждое по 2 колонки из 6: 6 / 3 = 2) */}
-            <div className="col-span-2">
-              <label className="block text-xs text-gray-400 mb-1">Масса чистая (кг)</label>
-              <input type="number" step="0.01" value={mass} onChange={e => setMass(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
-            </div>
-            
-            <div className="col-span-2">
-              <label className="block text-xs text-gray-400 mb-1">Масса заготовки (кг)</label>
-              <input type="number" step="0.01" value={massZag} onChange={e => setMassZag(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
-            </div>
-            
-            <div className="col-span-2">
-              <label className="block text-xs text-gray-400 mb-1">Профиль и размеры</label>
-              <input type="text" value={profileSize} onChange={e => setProfileSize(e.target.value)} className="w-full p-2 border rounded bg-white text-sm focus:outline-none focus:border-blue-500" required />
-            </div>
-          </div>
-
-
-
-            {/* БЛОК КАРТОЧЕК ОПЕРАЦИЙ */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="font-semibold text-gray-700 text-sm">Технологические операции</h2>
-                <button type="button" onClick={addOperation} className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition">
-                  + Добавить операцию
-                </button>
-              </div>
-
-              {operations.map((op, opIdx) => (
-                <div key={opIdx} className="border border-gray-200 p-4 rounded space-y-4 bg-white shadow-sm relative">
-                  
-                  {/* Верхняя линия управления операцией */}
-                  <div className="flex justify-between items-center w-full border-b border-gray-100 pb-2">
-                    <span className="text-xs font-bold text-gray-500">Операция № {opIdx + 1}</span>
-                    <button type="button" onClick={addOperation} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded text-xs font-medium transition">
-                      + Добавить операцию
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setOperations(operations.filter((_, i) => i !== opIdx))}
-                      className="text-gray-400 hover:text-red-600 text-xs font-semibold border border-transparent hover:border-red-200 hover:bg-red-50 px-2 py-0.5 rounded transition"
-                    >
-                      Удалить операцию ×
-                    </button>
-                  </div>
-
-                  {/* Сетка основных параметров операции */}
-                  <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
-                    <div className="md:col-span-1">
-                      <label className="block text-xs text-gray-400">№ Оп.</label>
-                      <input type="text" placeholder="010" value={op.operation_number} onChange={e => handleOpChange(opIdx, 'operation_number', e.target.value)} className="w-full p-2 border rounded text-sm bg-white" required />
-                    </div>
-                    <div className="md:col-span-5">
-                      <label className="block text-xs text-gray-400">Название операции</label>
-                      <input type="text" placeholder="Токарная" value={op.operation_name} onChange={e => handleOpChange(opIdx, 'operation_name', e.target.value)} className="w-full p-2 border rounded text-sm bg-white" required />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-xs text-gray-400">Рабочее место</label>
-                      <input type="text" value={op.workplace} onChange={e => handleOpChange(opIdx, 'workplace', e.target.value)} className="w-full p-2 border rounded text-sm bg-white" />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-xs text-gray-400">Оборудование</label>
-                      <input type="text" value={op.equipment} onChange={e => handleOpChange(opIdx, 'equipment', e.target.value)} className="w-full p-2 border rounded text-sm bg-white" />
-                    </div>
-                    {/* Поле нормы времени */}
-                    <div className="md:col-span-2">
-                      <label className="block text-xs text-gray-400">Норма времени (мин)</label>
-                      <input type="number" step="0.01" min="0" placeholder="0.00" value={op.nv} onChange={e => handleOpChange(opIdx, 'nv', e.target.value)} className="w-full p-2 border rounded text-sm bg-white focus:border-blue-500" />
-                    </div>
-                  </div>
-
-                    {/* Блок переходов (строк О) с плотной сеткой инструментов и Drag and Drop */}
-                    <div className="pl-4 border-l-2 border-gray-200 space-y-1">
-                      <div className="flex justify-between items-center mb-0.5">
-                        <span className="text-xs font-medium text-gray-400">Содержимое (Строки О):</span>
-                        <button 
-                          type="button" 
-                          onClick={() => addRowToOp(opIdx)} 
-                          className="text-xs text-blue-600 hover:underline"
-                        >
-                          + Добавить переход
-                        </button>
-                      </div>
-                      
-                      {/* Контекст перетаскивания строк для конкретной операции */}
-                      <DragDropContext onDragEnd={(result) => handleRowDrop(opIdx, result)}>
-                        <Droppable droppableId={`droppable-rows-${opIdx}`}>
-                          {(provided) => (
-                            <div 
-                              {...provided.droppableProps} 
-                              ref={provided.innerRef}
-                              className="space-y-1"
-                            >
-                              {op.rows.map((row, rowIdx) => (
-                                <Draggable 
-                                  key={`row-${opIdx}-${rowIdx}`} 
-                                  draggableId={`drag-${opIdx}-${rowIdx}`} 
-                                  index={rowIdx}
-                                >
-                                  {(provided, snapshot) => (
-                                    <div 
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      className={`flex gap-2 items-start py-0.5 group transition-colors ${
-                                        snapshot.isDragging ? 'bg-blue-50/60 rounded shadow-sm' : ''
-                                      }`}
-                                    >
-                                      
-                                      {/* Буква О (работает как ручка перетаскивания) */}
-                                      <span 
-                                        {...provided.dragHandleProps}
-                                        className="text-xs font-bold text-gray-400 bg-gray-50 border px-2 py-1.5 rounded h-[32px] flex items-center shadow-sm cursor-grab active:cursor-grabbing hover:bg-gray-100 select-none"
-                                        title="Потяните для изменения порядка"
-                                      >
-                                        О
-                                      </span>
-                                      
-                                      {/* Поле действия перехода */}
-                                      <input 
-                                        type="text" 
-                                        placeholder="Действие перехода..." 
-                                        value={row.text} 
-                                        onChange={e => handleRowChange(opIdx, rowIdx, e.target.value)} 
-                                        className="flex-[2] min-w-[200px] p-1.5 border rounded text-xs bg-white focus:outline-none focus:border-blue-400 shadow-sm h-[32px]" 
-                                        required 
-                                      />
-
-                                      {/* Правая часть: Фиксированная ячейка инструментов с вертикальным переносом */}
-                                      <div className="relative flex flex-col gap-1 flex-1 min-w-[180px] bg-gray-50/30 border border-dashed border-gray-200 rounded p-1 min-h-[32px] pr-8">
-                                        
-                                        {/* Компактная кнопка «+» для добавления инструмента */}
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            const updatedOps = [...operations];
-                                            const currentTools = row.measuringTools || [];
-                                            updatedOps[opIdx].rows[rowIdx].measuringTools = [
-                                              ...currentTools,
-                                              { name: '', measuringTool: { name: '' } }
-                                            ];
-                                            setOperations(updatedOps);
-                                          }}
-                                          className="absolute top-1 right-1 text-[11px] text-green-600 bg-green-50 hover:bg-green-100 border border-green-200 rounded w-5 h-5 font-bold transition-colors flex items-center justify-center z-10"
-                                          title="Добавить инструмент"
-                                        >
-                                          +
-                                        </button>
-
-                                        {/* Если массив пуст, по умолчанию показываем один инпут */}
-                                        {/* Если массив пуст, по умолчанию показываем один инпут с выбором */}
-                                        {(!row.measuringTools || row.measuringTools.length === 0) ? (
-                                          <div className="w-full">
-                                            <MeasuringToolSelect
-                                              value=""
-                                              onChange={(toolName, toolId) => {
-                                                const updatedOps = [...operations];
-                                                // Записываем инструмент, сохраняя структуру для БД (id и name)
-                                                updatedOps[opIdx].rows[rowIdx].measuringTools = [
-                                                  { 
-                                                    id: toolId,               // <--- СОХРАНЯЕМ ID ТУТ
-                                                    measuringToolId: toolId,  // <--- СОХРАНЯЕМ ID ТУТ
-                                                    name: toolName,
-                                                    measuringTool:  { name: toolName } 
-                                                  }
-                                                ];
-                                                setOperations(updatedOps);
-                                              }}
-                                            />
-                                          </div>
-                                        ) : (
-                                          /* Мапим инструменты вертикальной стопкой */
-                                          <div className="flex flex-col gap-1 w-full">
-                                            {row.measuringTools.map((mt, mtIdx) => (
-                                              <div key={mtIdx} className="flex items-center border rounded bg-white shadow-sm h-[24px] pr-1 focus-within:border-green-400 transition-colors w-full">
-                                                
-                                                {/* Поле выбора с фильтрацией */}
-                                                <div className="w-full">
-                                                  <MeasuringToolSelect
-                                                    value={mt.measuringTool?.name || mt.name || ''}
-                                                    onChange={(toolName, toolId) => {
-                                                      const updatedOps = [...operations];
-                                                      // Обновляем конкретный инструмент в массиве строки
-                                                      updatedOps[opIdx].rows[rowIdx].measuringTools[mtIdx] = {
-                                                        ...updatedOps[opIdx].rows[rowIdx].measuringTools[mtIdx],
-                                                        id: toolId,               // <--- СОХРАНЯЕМ ID ТУТ
-                                                        measuringToolId: toolId,  // <--- СОХРАНЯЕМ ID ТУТ
-                                                        name: toolName,
-                                                        measuringTool: { name: toolName }
-                                                      };
-                                                      setOperations(updatedOps);
-                                                    }}
-                                                  />
-                                                </div>
-
-                                                <button
-                                                  type="button"
-                                                  onClick={() => {
-                                                    const updatedOps = [...operations];
-                                                    updatedOps[opIdx].rows[rowIdx].measuringTools = row.measuringTools.filter((_, i) => i !== mtIdx);
-                                                    setOperations(updatedOps);
-                                                  }}
-                                                  className="text-gray-400 hover:text-red-500 font-bold text-xs px-1 z-10"
-                                                >
-                                                  ×
-                                                </button>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        )}
-                                      </div>
-
-                                      {/* Кнопка удаления всей строки перехода */}
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const updatedOps = [...operations];
-                                          updatedOps[opIdx].rows = updatedOps[opIdx].rows.filter((_, rI) => rI !== rowIdx);
-                                          setOperations(updatedOps);
-                                        }}
-                                        className="text-gray-300 hover:text-red-500 text-xs font-bold transition-colors h-[32px] flex items-center px-1"
-                                      >
-                                        ×
-                                      </button>
-
-                                    </div>
-                                  )}
-                                </Draggable>
-                              ))}
-                              {/* Технический распор dnd */}
-                              {provided.placeholder}
-                            </div>
-                          )}
-                        </Droppable>
-                      </DragDropContext>
-                    </div>
-
-
-
-
-                </div>
-              ))}
-            </div>
-
-            {/* Вывод статуса */}
-            {statusMessage && (
-              <div className={`p-3 text-sm rounded ${statusMessage.startsWith('Ошибка') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
-                {statusMessage}
-              </div>
-            )}
-
-            {/* Кнопки отправки формы */}
-            <div className="flex gap-4 pt-2">
-              <button type="submit" disabled={loading} className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-900 text-white rounded font-medium text-sm transition shadow-sm disabled:bg-gray-400">
-                {loading ? 'Сохранение в базу данных...' : 'Сохранить технологическую карту'}
-              </button>
-              <button type="button" onClick={startNewCard} className="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded font-medium text-sm transition">
-                Сбросить бланк
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+      {/* ЛЕВАЯ ЧАСТЬ: ОСНОВНАЯ ФОРМА ТЕХКАРТЫ (ВЫНЕСЕНА) */}
+      <TechCardFormBody 
+        docNumber={docNumber} setDocNumber={setDocNumber}
+        partName={partName} setPartName={setPartName}
+        material={material} setMaterial={setMaterial}
+        mass={mass} setMass={setMass}
+        massZag={massZag} setMassZag={setMassZag}
+        profileSize={profileSize} setProfileSize={setProfileSize}
+        selectedCardId={selectedCardId}
+        operations={operations} setOperations={setOperations}
+        statusMessage={statusMessage}
+        loading={loading}
+        handleSubmit={handleSubmit}
+        addOperation={addOperation}
+        handleOpChange={handleOpChange}
+        addRowToOp={addRowToOp}
+        handleRowDrop={handleRowDrop}
+        handleRowChange={handleRowChange}
+        startNewCard={startNewCard}
+      />
 
       {/* ПРАВАЯ ЧАСТЬ: МЕНЮ СПИСКА ТЕХКАРТ */}
-      <div className="w-80 border-l border-gray-200 bg-white p-4 overflow-y-auto max-h-screen">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-gray-700 text-xs uppercase tracking-wider">Перечень техкарт</h3>
-          <div className="flex gap-1.5">
-            {/* НОВАЯ КНОПКА: Справочник мерительного инструмента */}
-            <button 
-              type="button" 
-              onClick={() => setIsMeasuringCatalogOpen(true)} 
-              className="px-2 py-1 bg-gray-600 text-white rounded text-[11px] font-medium hover:bg-gray-700 transition"
-            >
-              Справочник
-            </button>
-            <button 
-              type="button" 
-              onClick={() => {startNewCard()}} 
-              className="px-2 py-1 bg-emerald-600 text-white rounded text-[11px] font-medium hover:bg-emerald-700 transition"
-            >
-              Новый бланк
-            </button>
-          </div>
-        </div>
-        
-        <input type="text" placeholder="Поиск по номеру документа..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full p-2 border rounded mb-4 text-xs bg-white focus:outline-none focus:border-blue-500" />
-        
-        <div className="space-y-2">
-          {filteredCardsList.map(card => (
-            <button key={card.id} type="button" onClick={() => loadSingleCard(card.id)} className={`w-full text-left p-2.5 rounded border text-xs transition ${selectedCardId === card.id ? 'border-blue-300 bg-blue-50/50 text-blue-600' : 'border-gray-200 hover:bg-gray-50 text-gray-500'}`}>
-              <div className="font-semibold tracking-wide">{card.documentNumber}</div>
-              <div className="text-gray-400 uppercase text-[11px] truncate mt-0.5">{card.partName}</div>
-            </button>
-          ))}
-          {filteredCardsList.length === 0 && <div className="text-xs text-gray-400 text-center py-4">Документы не найдены</div>}
-        </div>
-
-        {/* РЕНДЕР МОДАЛЬНОГО ОКНА (Вставляется здесь или в самом низу вашего JSX) */}
-        <MeasuringToolsModal isOpen={isMeasuringCatalogOpen} onClose={() => setIsMeasuringCatalogOpen(false)} />
-      </div>
+      <TechCardSidebar 
+        setIsMeasuringCatalogOpen={setIsMeasuringCatalogOpen}
+        isMeasuringCatalogOpen={isMeasuringCatalogOpen}
+        startNewCard={startNewCard}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        filteredCardsList={filteredCardsList}
+        loadSingleCard={loadSingleCard}
+        selectedCardId={selectedCardId}
+      />
 
 
     </main>
