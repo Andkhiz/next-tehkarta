@@ -280,7 +280,7 @@ const handleRowDrop = (opIndex: number, result: any) => {
       
       {/* ЛЕВАЯ ЧАСТЬ: ОСНОВНАЯ ФОРМА ТЕХКАРТЫ */}
       <div className="flex-1 p-8 overflow-y-auto max-h-screen">
-        <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md border border-gray-200">
+        <div className="max-w-8xl mx-auto bg-white p-6 rounded-lg shadow-md border border-gray-200">
           
           {/* Контейнер заголовка */}
           <div className="relative flex items-center justify-center w-full mb-6">
@@ -451,12 +451,12 @@ const handleRowDrop = (opIndex: number, result: any) => {
                                         placeholder="Действие перехода..." 
                                         value={row.text} 
                                         onChange={e => handleRowChange(opIdx, rowIdx, e.target.value)} 
-                                        className="flex-1 p-1.5 border rounded text-xs bg-white focus:outline-none focus:border-blue-400 shadow-sm h-[32px]" 
+                                        className="flex-[2] min-w-[200px] p-1.5 border rounded text-xs bg-white focus:outline-none focus:border-blue-400 shadow-sm h-[32px]" 
                                         required 
                                       />
 
                                       {/* Правая часть: Фиксированная ячейка инструментов с вертикальным переносом */}
-                                      <div className="relative flex flex-col gap-1 w-64 bg-gray-50/30 border border-dashed border-gray-200 rounded p-1 min-h-[32px] pr-8">
+                                      <div className="relative flex flex-col gap-1 flex-1 min-w-[180px] bg-gray-50/30 border border-dashed border-gray-200 rounded p-1 min-h-[32px] pr-8">
                                         
                                         {/* Компактная кнопка «+» для добавления инструмента */}
                                         <button
