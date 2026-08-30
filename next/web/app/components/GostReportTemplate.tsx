@@ -264,11 +264,17 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
         <View style={{ borderLeftWidth: 0, borderBottomWidth: 0, borderColor: '#000', marginTop: -1 }}  fixed>
           
           {/* Индекс ГОСТа сверху справа */}
-          <View style={[styles.fullWidthTransparentRow, {paddingRight: 8}]}>
-            <Text style={{ width: '100%', fontSize: 12, textAlign: 'right' }}>
-                ГОСТ 3.1118-82 Форма 1
-            </Text>
+          <View style={[styles.fullWidthTransparentRow, { paddingRight: 8 }]}>
+            <View 
+              fixed
+              render={({ pageNumber }) => (
+                <Text style={{ width: '100%', fontSize: 12, textAlign: 'right' }}>
+                  ГОСТ 3.1118-82 Форма 1{pageNumber !== 1 ? 'а' : ''}
+                </Text>
+              )}
+            />
           </View>
+
            {/* Пустая строка*/}
 
           <View style={styles.gostTable}>
@@ -358,51 +364,88 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
 
 
         {/* Контейнер высотой на все 3 строки подписи (0.37 * 3 = 1.11 см) */}
-        <View style={{ flexDirection: 'row', height: cm(1.11), borderLeftWidth: 1, borderColor: '#000' }}>
-            {/* КОЛОНКА ПОДПИСЕЙ СЛЕВА (Разбита вертикально на 3 строки) */}
-            <View style={{ width: cm(7.68), flexDirection: 'column' }}>
-                {/* Строка 1: Розроб. */}
-                <View style={{ flexDirection: 'row', height: cm(0.37) }}>
-                    <View style={[styles.gostCellLeft, { width: cm(2.1) }]}><Text style={{ fontSize: 8 }}>Розроб.</Text></View>
-                    <View style={[styles.gostCellLeft, { width: cm(3.2) }]}><Text></Text></View>
-                    <View style={[styles.gostCellLeft, { width: cm(1.43) }]}><Text></Text></View>
-                    <View style={[styles.gostCellLeft, { width: cm(0.95) }]}><Text></Text></View>
+        <View 
+          render={({ pageNumber }) => (
+            // Если страница НЕ первая, этот блок полностью исчезает из потока документа
+            pageNumber !== 1 ? (
+              
+              <View style={{ 
+                flexDirection: 'column', 
+                height: cm(1.15), 
+                borderLeftWidth: 1, 
+                borderColor: '#000' 
+              }}>
+                
+                {/* Строка 1 */}
+                <View style={[styles.gostCell, { width: '100%', height: cm(0.383), paddingLeft: 6, justifyContent: 'center' }]}>
+                  <Text>{data.material}</Text>
                 </View>
-                {/* Строка 2: Перевір. */}
-                <View style={{ flexDirection: 'row', height: cm(0.37) }}>
-                    <View style={[styles.gostCellLeft, { width: cm(2.1) }]}><Text style={{ fontSize: 8 }}>Перевір.</Text></View>
-                    <View style={[styles.gostCell, { width: cm(3.2) }]}><Text></Text></View>
-                    <View style={[styles.gostCell, { width: cm(1.43) }]}><Text></Text></View>
-                    <View style={[styles.gostCell, { width: cm(0.95) }]}><Text></Text></View>
+                
+                {/* Строка 2 */}
+                <View style={[styles.gostCell, { width: '100%', height: cm(0.383), paddingLeft: 6, justifyContent: 'center' }]}>
+                  <Text>{data.material}</Text>
                 </View>
-                {/* Строка 3: Прийняв. */}
-                <View style={{ flexDirection: 'row', height: cm(0.37) }}>
-                    <View style={[styles.gostCellLeft, { width: cm(2.1) }]}><Text style={{ fontSize: 8 }}>Прийняв.</Text></View>
-                    <View style={[styles.gostCell, { width: cm(3.2) }]}><Text></Text></View>
-                    <View style={[styles.gostCell, { width: cm(1.43) }]}><Text></Text></View>
-                    <View style={[styles.gostCell, { width: cm(0.95) }]}><Text></Text></View>
+                
+                {/* Строка 3 */}
+                <View style={[styles.gostCell, { width: '100%', height: cm(0.383), paddingLeft: 6, justifyContent: 'center' }]}>
+                  <Text>{data.material}</Text>
                 </View>
-            </View>
 
-            {/* ОБЪЕДИНЕННЫЕ ЦЕНТРАЛЬНЫЕ ЯЧЕЙКи С КОДОМ (На всю высоту 1.11 см) */}
-            <View style={[styles.gostCell, { width: cm(3.03), height: '100%', justifyContent: 'center', alignItems: 'center' }]}>
-                <Text style={{ fontSize: 12, fontFamily: 'Times New Roman Bold' }}></Text>
-            </View>
-            <View style={[styles.gostCell, { width: cm(6.06), height: '100%', justifyContent: 'center', alignItems: 'center' }]}>
-                <Text style={{ fontSize: 12, fontFamily: 'Times New Roman Bold' }}>XXXX.XXXXX.XXX</Text>
-            </View>
-            <View style={[styles.gostCell, { width: cm(4.64), height: '100%', justifyContent: 'center', alignItems: 'center' }]}>
-                <Text style={{ fontSize: 12, fontFamily: 'Times New Roman Bold' }}></Text>
-            </View>
+              </View>
 
-            {/* ОБЪЕДИНЕННАЯ ПРАВАЯ ЯЧЕЙКА С ДАННЫМИ (На всю высоту 1.11 см) */}
-            <View style={[styles.gostCell, { width: cm(5.45), height: '100%', justifyContent: 'center', alignItems: 'center' }]}>
-                <Text style={{ fontSize: 12 }}>{data.documentNumber}</Text>
-            </View>
-        </View>
 
+            ) : (
+                <View style={{ flexDirection: 'row', height: cm(1.15), borderLeftWidth: 1, borderColor: '#000' }}>
+                    {/* КОЛОНКА ПОДПИСЕЙ СЛЕВА (Разбита вертикально на 3 строки) */}
+                    <View style={{ width: cm(7.68), flexDirection: 'column' }}>
+                        {/* Строка 1: Розроб. */}
+                        <View style={{ flexDirection: 'row', height: cm(0.37) }}>
+                            <View style={[styles.gostCellLeft, { width: cm(2.1) }]}><Text style={{ fontSize: 8, justifyContent: 'flex-start' }}>Розроб.</Text></View>
+                            <View style={[styles.gostCellLeft, { width: cm(3.2) }]}><Text></Text></View>
+                            <View style={[styles.gostCellLeft, { width: cm(1.43) }]}><Text></Text></View>
+                            <View style={[styles.gostCellLeft, { width: cm(0.95) }]}><Text></Text></View>
+                        </View>
+                        {/* Строка 2: Перевір. */}
+                        <View style={{ flexDirection: 'row', height: cm(0.37) }}>
+                            <View style={[styles.gostCellLeft, { width: cm(2.1) }]}><Text style={{ fontSize: 8 }}>Перевір.</Text></View>
+                            <View style={[styles.gostCell, { width: cm(3.2) }]}><Text></Text></View>
+                            <View style={[styles.gostCell, { width: cm(1.43) }]}><Text></Text></View>
+                            <View style={[styles.gostCell, { width: cm(0.95) }]}><Text></Text></View>
+                        </View>
+                        {/* Строка 3: Прийняв. */}
+                        <View style={{ flexDirection: 'row', height: cm(0.37) }}>
+                            <View style={[styles.gostCellLeft, { width: cm(2.1) }]}><Text style={{ fontSize: 8 }}>Прийняв.</Text></View>
+                            <View style={[styles.gostCell, { width: cm(3.2) }]}><Text></Text></View>
+                            <View style={[styles.gostCell, { width: cm(1.43) }]}><Text></Text></View>
+                            <View style={[styles.gostCell, { width: cm(0.95) }]}><Text></Text></View>
+                        </View>
+                    </View>
+
+                    {/* ОБЪЕДИНЕННЫЕ ЦЕНТРАЛЬНЫЕ ЯЧЕЙКи С КОДОМ (На всю высоту 1.11 см) */}
+                    <View style={[styles.gostCell, { width: cm(3.03), height: '100%', justifyContent: 'center', alignItems: 'center' }]}>
+                        <Text style={{ fontSize: 12, fontFamily: 'Times New Roman Bold' }}></Text>
+                    </View>
+                    <View style={[styles.gostCell, { width: cm(6.06), height: '100%', justifyContent: 'center', alignItems: 'center' }]}>
+                        <Text style={{ fontSize: 12, fontFamily: 'Times New Roman Bold' }}>XXXX.XXXXX.XXX</Text>
+                    </View>
+                    <View style={[styles.gostCell, { width: cm(4.64), height: '100%', justifyContent: 'center', alignItems: 'center' }]}>
+                        <Text style={{ fontSize: 12, fontFamily: 'Times New Roman Bold' }}></Text>
+                    </View>
+
+                    {/* ОБЪЕДИНЕННАЯ ПРАВАЯ ЯЧЕЙКА С ДАННЫМИ (На всю высоту 1.11 см) */}
+                    <View style={[styles.gostCell, { width: cm(5.45), height: '100%', justifyContent: 'center', alignItems: 'center' }]}>
+                        <Text style={{ fontSize: 12 }}>{data.documentNumber}</Text>
+                    </View>
+                </View>
+            )
+          )}
+         />
         {/* Контейнер высотой на все 2 строки подписи (0.37 * 2 = 0.74 см) */}
-        <View style={{ flexDirection: 'row', height: cm(0.74), borderLeftWidth: 1, borderColor: '#000' }}>
+        <View 
+          render={({ pageNumber }) => (
+            // Если страница НЕ первая, этот блок полностью исчезает из потока документа
+            pageNumber !== 1 ? null : (
+        <View style={{ flexDirection: 'row', height: cm(0.77), borderLeftWidth: 1, borderColor: '#000' }}>
             {/* КОЛОНКА ПОДПИСЕЙ СЛЕВА (Разбита вертикально на 3 строки) */}
             <View style={{ width: cm(7.68), flexDirection: 'column' }}>
                 {/* Строка 1: Розроб. */}
@@ -435,11 +478,19 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
                 <Text style={{ fontSize: 12 }}></Text>
             </View>
         </View>
+        )
+          )}
+         />
          
 
           {/* Строка 5: Н. контр и Материал */}
         {/* Контейнер для нижней части рамки. 
     Высота складывается из: строка материала (0.82 см) + шапка параметров (0.56 см) + значения параметров (0.66 см) = 1.5 см */}
+  <View 
+          render={({ pageNumber }) => (
+            // Если страница НЕ первая, этот блок полностью исчезает из потока документа
+            pageNumber !== 1 ? null : (  
+    
     <View style={{ flexDirection: 'row', height: cm(2.04), borderLeftWidth: 1, borderColor: '#000' }}>
     
         {/* ЛЕВЫЙ БЛОК (Занимает 22.45 см, разделен на 3 строки по горизонтали) */}
@@ -447,10 +498,11 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
             
             {/* 1. СТРОКА МАТЕРИАЛА */}
             <View style={{ flexDirection: 'row', height: cm(0.82) }}>
-            <View style={[styles.gostCell, { width: '100%', paddingLeft: 6 }]}><Text>{data.material}</Text></View>
+               <View style={[styles.gostCell, { width: '100%', paddingLeft: 6 }]}><Text>{data.material}</Text></View>
             </View>
             
             {/* 2 /3.  Объединенная СТРОКА МО2 */}
+            
             <View style={{ flexDirection: 'row', height: cm(1.22) }}>
                 <View style={[styles.gostCell, { width: cm(1.2), height: '100%', fontSize: 10 }]}>
                     <Text>МО2</Text>
@@ -495,6 +547,11 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
         </View>
 
     </View>
+
+)
+          )}
+         />
+
             {/* КОНТЕЙНЕР ДЛЯ СТАТИЧЕСКОГО ЗАГОЛОВКА ТАБЛИЦЫ ТЕХПРОЦЕССА */}
         <View style={{ borderLeftWidth: 1, borderBottomWidth: 1, borderColor: '#000', marginTop: 0 }} fixed>
         
@@ -555,13 +612,13 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
   const formatNum = (num: number) => num.toString().padStart(2, '0');
 
   return data.operations?.map((operation) => (
-    <View key={operation.id} style={{ flexDirection: 'column' }}>
+    <View key={operation.id} style={{ flexDirection: 'column' }} wrap={false} >
       
       {/* ================= СТРОКА А (ДАННЫЕ ОПЕРАЦИИ) ================= */}
       {(() => {
         globalLineCount++;
         return (
-          <View style={{ flexDirection: 'row', minHeight: cm(0.63), alignItems: 'stretch' }} wrap={false}>
+          <View style={{ flexDirection: 'row', minHeight: cm(0.65), alignItems: 'stretch' }} >
             <View style={[styles.processCellB, { width: cm(0.4), fontSize: 10, borderLeftWidth: 1 }]}><Text>А</Text></View>
             <View style={[styles.processCell, { width: cm(0.8), fontSize: 10 }]}><Text>{formatNum(globalLineCount)}</Text></View>
             <View style={[styles.processCell, { width: cm(0.9) }]}><Text></Text></View>
