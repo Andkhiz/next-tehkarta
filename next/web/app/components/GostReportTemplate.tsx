@@ -279,7 +279,7 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
 
           <View style={styles.gostTable}>
             {/* Строка 0 — Пустая строка */}
-            <View style={{ flexDirection: 'row', height: cm(0.37) }}>
+            <View style={{ flexDirection: 'row', height: cm(0.4) }}>
                 <View style={[styles.transparentCellR, { width: cm(1.53)}]}><Text></Text></View>
                 <View style={[styles.transparentCellR, { width: cm(1.87) }]}><Text></Text></View>
                 <View style={[styles.transparentCellR, { width: cm(1.9) }]}><Text></Text></View>
@@ -298,7 +298,7 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
 
             </View>      
             {/* Строка 1 — Дубл. на левом краю */}
-            <View style={{ flexDirection: 'row', height: cm(0.37) }}>
+            <View style={{ flexDirection: 'row', height: cm(0.4) }}>
                 <View style={[styles.gostCell, { width: cm(1.53), fontSize: 8,  borderLeftWidth: 1}]}><Text>Дубл.</Text></View>
                 <View style={[styles.gostCell, { width: cm(1.87) }]}><Text></Text></View>
                 <View style={[styles.gostCell, { width: cm(1.9) }]}><Text></Text></View>
@@ -317,7 +317,7 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
             </View>
 
             {/* Строка 2 — Взам. на левом краю */}
-            <View style={{ flexDirection: 'row', height: cm(0.37) }}>
+            <View style={{ flexDirection: 'row', height: cm(0.4) }}>
                 <View style={[styles.gostCell, { width: cm(1.53), fontSize: 8,  borderLeftWidth: 1  }]}><Text>Взам.</Text></View>
                 <View style={[styles.gostCell, { width: cm(1.87) }]}><Text></Text></View>
                 <View style={[styles.gostCell, { width: cm(1.9) }]}><Text></Text></View>
@@ -336,7 +336,7 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
             </View>
 
             {/* Строка 3 — Підп. на левом краю, а Розроб. двигаем в третью колонку */}
-            <View style={{ flexDirection: 'row', height: cm(0.37) }}>
+            <View style={{ flexDirection: 'row', height: cm(0.4) }}>
                 <View style={[styles.gostCell, { width: cm(1.53), fontSize: 8,  borderLeftWidth: 1  }]}><Text>Підп.</Text></View>
                 <View style={[styles.gostCell, { width: cm(1.87) }]}><Text></Text></View>
                 <View style={[styles.gostCell, { width: cm(1.9) }]}><Text></Text></View>
@@ -395,25 +395,25 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
 
 
             ) : (
-                <View style={{ flexDirection: 'row', height: cm(1.15), borderLeftWidth: 1, borderColor: '#000' }}>
+                <View style={{ flexDirection: 'row', height: cm(1.25), borderLeftWidth: 1, borderColor: '#000' }}>
                     {/* КОЛОНКА ПОДПИСЕЙ СЛЕВА (Разбита вертикально на 3 строки) */}
                     <View style={{ width: cm(7.68), flexDirection: 'column' }}>
                         {/* Строка 1: Розроб. */}
-                        <View style={{ flexDirection: 'row', height: cm(0.37) }}>
+                        <View style={{ flexDirection: 'row', height: cm(0.4) }}>
                             <View style={[styles.gostCellLeft, { width: cm(2.1) }]}><Text style={{ fontSize: 8, justifyContent: 'flex-start' }}>Розроб.</Text></View>
                             <View style={[styles.gostCellLeft, { width: cm(3.2) }]}><Text></Text></View>
                             <View style={[styles.gostCellLeft, { width: cm(1.43) }]}><Text></Text></View>
                             <View style={[styles.gostCellLeft, { width: cm(0.95) }]}><Text></Text></View>
                         </View>
                         {/* Строка 2: Перевір. */}
-                        <View style={{ flexDirection: 'row', height: cm(0.37) }}>
+                        <View style={{ flexDirection: 'row', height: cm(0.4) }}>
                             <View style={[styles.gostCellLeft, { width: cm(2.1) }]}><Text style={{ fontSize: 8 }}>Перевір.</Text></View>
                             <View style={[styles.gostCell, { width: cm(3.2) }]}><Text></Text></View>
                             <View style={[styles.gostCell, { width: cm(1.43) }]}><Text></Text></View>
                             <View style={[styles.gostCell, { width: cm(0.95) }]}><Text></Text></View>
                         </View>
                         {/* Строка 3: Прийняв. */}
-                        <View style={{ flexDirection: 'row', height: cm(0.37) }}>
+                        <View style={{ flexDirection: 'row', height: cm(0.4) }}>
                             <View style={[styles.gostCellLeft, { width: cm(2.1) }]}><Text style={{ fontSize: 8 }}>Прийняв.</Text></View>
                             <View style={[styles.gostCell, { width: cm(3.2) }]}><Text></Text></View>
                             <View style={[styles.gostCell, { width: cm(1.43) }]}><Text></Text></View>
