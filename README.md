@@ -136,8 +136,11 @@ docker compose up -d
 
 **Для Windows (PowerShell):**
 ```powershell
-\$env:PGPASSWORD="mysecretpassword"; docker exec -t nextjs_postgres_db pg_dump -U myuser my_next_db > backup.sql
+docker exec -e PGPASSWORD="mysecretpassword" -i nextjs_postgres_db pg_dump -U myuser -d my_next_db --data-only --column-inserts --encoding=UTF8 -f /tmp/backup_data.sql
+docker cp nextjs_postgres_db:/tmp/backup_data.sql ./backup_data.sql
 ```
+
+
 ### ⚙️ Как это работает под капотом:
 **Создается файл backup.sql со всеми объектами и данными базы данных.
 
@@ -145,5 +148,12 @@ docker compose up -d
 
 **Для Windows (PowerShell):**
 ```powershell
-\$env:PGPASSWORD="mysecretpassword"; docker exec -i nextjs_postgres_db psql -U myuser -d my_next_db < backup.sql
+docker cp ./backup_data.sql nextjs_postgres_db:/tmp/backup_data.sql
+docker exec -e PGPASSWORD="mysecretpassword" -i nextjs_postgres_db psql -U myuser -d my_next_db -f /tmp/backup_data.sql
+```
+
+*Сброс счетчиков ID (Последовательностей)*
+```powershell
+docker cp ./fix_sequences.sql nextjs_postgres_db:/tmp/fix_sequences.sql
+docker exec -e PGPASSWORD="mysecretpassword" -i nextjs_postgres_db psql -U myuser -d my_next_db -f /tmp/fix_sequences.sql
 ```
