@@ -2,7 +2,7 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 
 // Регистрируем шрифты для поддержки кириллицы
-Font.register({
+/*Font.register({
   family: 'Roboto',
   src: '/fonts/Roboto-Regular.ttf',
   fontWeight: 'normal',
@@ -11,7 +11,7 @@ Font.register({
   family: 'RobotoBold',
   src: '/fonts/Roboto-Bold.ttf',
   fontWeight: 'bold',
-});
+});*/
 Font.register({
   family: 'Times New Roman',
   src: '/fonts/times.ttf',
@@ -58,6 +58,7 @@ export interface RouteCardData {
 
 interface GostReportTemplateProps {
   data: RouteCardData;
+  reportType: string;
 }
 
 const styles = StyleSheet.create({
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
 
 const cm = (value: number) => value * 28.35;
 
-export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) => {
+export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data, reportType }) => {
   if (!data) return null;
 
   return (
@@ -176,7 +177,7 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
               fixed
               render={({ pageNumber }) => (
                 <Text style={{ width: '100%', fontSize: 12, textAlign: 'right' }}>
-                  ГОСТ 3.1118-82 Форма 1{pageNumber !== 1 ? 'а' : ''}
+                  ГОСТ {reportType==='mk' ? '3.1404-86' : '3.1118-82' } Форма 1{pageNumber !== 1 ? (reportType==='mk' ? 'б' : 'а') : ''}
                 </Text>
               )}
             />
@@ -602,118 +603,158 @@ export const GostReportTemplate: React.FC<GostReportTemplateProps> = ({ data }) 
 
       {/* ================= СТРОКИ Б: ВЛОЖЕННЫЕ ПЕРЕХОДЫ ИЗ МАССИВА ROWS ================= */}
      {operation.rows?.map((row) => {
-    // Увеличиваем счетчик для основной строки перехода
-    globalLineCount++;
+        // Увеличиваем счетчик для основной строки перехода
+        globalLineCount++;
 
-    const measuringTools = (row as any).measuringTools || [];
+        const measuringTools = (row as any).measuringTools || [];
 
-    return (
+        return (
         <React.Fragment key={row.id}>
         
         {/* 1. ОСНОВНАЯ СТРОКА ПЕРЕХОДА */}
-        <View style={{ flexDirection: 'row', minHeight: cm(0.63), alignItems: 'stretch', fontFamily: 'Times New Roman', width: '100%' }} wrap={false}>
+        {/* ИСПРАВЛЕНО: Убран alignItems: 'stretch', так как он блокирует динамический рост текста */}
+        <View style={{ flexDirection: 'row', minHeight: cm(0.63), fontFamily: 'Times New Roman', width: '100%' }} wrap={false}>
             {/* ИСПРАВЛЕНО: Для всех ячеек в этой строке переопределяем flexGrow на 0, чтобы они подчинялись жесткой ширине cm */}
-            <View style={[styles.processCellB, { flexBasis: cm(0.4), fontSize: 10, borderLeftWidth: 1, flexGrow: 0 }]}><Text>Б</Text></View>
-            <View style={[styles.processCell, { flexBasis: cm(0.8), fontSize: 10, flexGrow: 0 }]}><Text>{formatNum(globalLineCount)}</Text></View>
+            <View style={[styles.processCellB, { flexBasis: cm(0.4), fontSize: 10, borderLeftWidth: 1, flexGrow: 0, justifyContent: 'center', alignItems: 'center' }]}><Text>Б</Text></View>
+            <View style={[styles.processCell, { flexBasis: cm(0.8), fontSize: 10, flexGrow: 0, justifyContent: 'center', alignItems: 'center' }]}><Text>{formatNum(globalLineCount)}</Text></View>
             
             {/* Ячейка текста перехода */}
-            <View style={[styles.processCell, { flexBasis: cm(10.48), alignItems: 'flex-start', paddingLeft: 6, fontSize: 10, flexGrow: 1, paddingVertical: 3 }]}>
-                {/* ИСПРАВЛЕНО: Даем тексту ширину 100%, чтобы перенос строк считался корректно */}
-                <Text style={{ width: '100%' }}>{row.text || ' '}</Text>
+            <View style={[styles.processCell, { 
+                flexBasis: cm(10.48), 
+                alignItems: 'flex-start', 
+                justifyContent: 'center',
+                paddingLeft: 6, 
+                paddingRight: 6, // Добавлен отступ справа, чтобы текст не упирался в сетку
+                fontSize: 10, 
+                flexGrow: 1, 
+                paddingTop: 1,
+                paddingBottom: 1, // Увеличен отступ снизу для выносных элементов букв
+                // КРИТИЧЕСКИ ВАЖНО ДЛЯ ИСПРАВЛЕНИЯ ОБРЕЗКИ ТЕКСТА:
+                flexDirection: 'row',
+                flexWrap: 'wrap'
+            }]}>
+                {/* ИСПРАВЛЕНО: Даем тексту ширину 100% и явный lineHeight для корректного переноса слов */}
+                <Text style={{ width: '100%', lineHeight: 0.95 }}>{row.text || ' '}</Text>
             </View>
             
             {/* РАЗБИВАЕМ ПРАВУЮ СТРОКУ Б НА СЕТКУ НОРМАТИВОВ */}
-            {/* ИСПРАВЛЕНО: Добавляем flexGrow: 0 на все внутренние ячейки нормирования */}
-            <View style={[styles.processCell, { flexBasis: cm(1.15), flexGrow: 0 }]}><Text></Text></View>
-            <View style={[styles.processCell, { flexBasis: cm(1.44), flexGrow: 0 }]}><Text></Text></View>
-            <View style={[styles.processCell, { flexBasis: cm(0.93), flexGrow: 0 }]}><Text></Text></View>
-            <View style={[styles.processCell, { flexBasis: cm(1.15), flexGrow: 0 }]}><Text></Text></View>
-            <View style={[styles.processCell, { flexBasis: cm(0.93), flexGrow: 0 }]}><Text></Text></View>
-            <View style={[styles.processCell, { flexBasis: cm(1.39), flexGrow: 0 }]}><Text></Text></View>
-            <View style={[styles.processCell, { flexBasis: cm(1.37), flexGrow: 0 }]}><Text></Text></View>
-            <View style={[styles.processCell, { flexBasis: cm(1.01), flexGrow: 0 }]}><Text></Text></View>
-            <View style={[styles.processCell, { flexBasis: cm(2.36), flexGrow: 0 }]}><Text></Text></View>
-            <View style={[styles.processCell, { flexBasis: cm(2.04), flexGrow: 0 }]}><Text></Text></View>
-            {/* ИСПРАВЛЕНО: Последняя правая ячейка обязана иметь borderRightWidth: 1 */}
-            <View style={[styles.processCell, { flexBasis: cm(1.4), borderRightWidth: 1, flexGrow: 0 }]}><Text></Text></View>
+            {/* ИСПРАВЛЕНО: Заменено на .map с alignSelf: 'stretch', чтобы правая сетка растягивалась вслед за левым текстом */}
+            {[
+                { flexBasis: cm(1.15) }, { flexBasis: cm(1.44) }, { flexBasis: cm(0.93) },
+                { flexBasis: cm(1.15) }, { flexBasis: cm(0.93) }, { flexBasis: cm(1.39) },
+                { flexBasis: cm(1.37) }, { flexBasis: cm(1.01) }, { flexBasis: cm(2.36) },
+                { flexBasis: cm(2.04) }
+            ].map((sizeStyle, idx) => (
+                <View key={idx} style={[styles.processCell, sizeStyle, { flexGrow: 0, alignSelf: 'stretch', justifyContent: 'center' }]}><Text></Text></View>
+            ))}
+            {/* Последняя правая ячейка обязана иметь borderRightWidth: 1 */}
+            <View style={[styles.processCell, { flexBasis: cm(1.4), borderRightWidth: 1, flexGrow: 0, alignSelf: 'stretch', justifyContent: 'center' }]}><Text></Text></View>
         </View>
 
         {/* 2. ПОСТРОЧНЫЙ ВЫВОД МЕРИТЕЛЬНОГО ИНСТРУМЕНТА СРАЗУ ПОСЛЕ ПЕРЕХОДА */}
         {measuringTools.map((mt: any, mtIdx: number) => {
-            globalLineCount++;
+              if (reportType === 'mk') return null;
+              globalLineCount++;
 
-            const rawName = mt.measuringTool?.name || mt.name || '';
-            const cleanedToolName = rawName.replace(/^"|"$/g, '').replace(/\\"/g, '"');
+              const rawName = mt.measuringTool?.name || mt.name || '';
+              const cleanedToolName = rawName.replace(/^"|"$/g, '').replace(/\\"/g, '"');
 
-            if (!cleanedToolName) return null;
+              if (!cleanedToolName) return null;
 
-            // Внутренний объект для одинаковых стилей пустых правых ячеек нормирования
-            const rightCellOption = {
-                borderRightWidth: 1,
-                borderBottomWidth: 1,
-                borderColor: '#000000',
-                minHeight: cm(0.63),
-                flexGrow: 0 // ИСПРАВЛЕНО: жестко запрещаем ячейкам нормативов неконтролируемо растягиваться вширь
-            };
+              // Внутренний объект для одинаковых стилей пустых правых ячеек нормирования
+              const rightCellOption = {
+                  borderRightWidth: 1,
+                  borderBottomWidth: 1,
+                  borderColor: '#000000',
+                  minHeight: cm(0.63),
+                  flexGrow: 0
+              };
 
-            return (
-            <View 
-                key={mt.id || mtIdx} 
-                style={{ 
-                    flexDirection: 'row', 
-                    minHeight: cm(0.63), 
-                    alignItems: 'stretch', 
-                    width: '100%'
-                }} 
-                wrap={false}
-            >
-                {/* Ячейка кода строки Б */}
-                <View style={{ flexBasis: cm(0.4), fontSize: 10, borderLeftWidth: 1, borderBottomWidth: 1, borderColor: '#000000', borderRightWidth: 0, justifyContent: 'center', alignItems: 'center', fontFamily: 'Times New Roman' }}>
-                    <Text>Б</Text>
+              return (
+                <View 
+                    key={mt.id || mtIdx} 
+                    style={{ 
+                        flexDirection: 'row', 
+                        minHeight: cm(0.63), 
+                        width: '100%'
+                    }} 
+                    wrap={false}
+                >
+                    {/* Ячейка кода строки Б */}
+                    <View style={{ 
+                        flexBasis: cm(0.4), 
+                        fontSize: 10, 
+                        borderLeftWidth: 1, 
+                        borderBottomWidth: 1, 
+                        borderColor: '#000000', 
+                        justifyContent: 'center', 
+                        alignItems: 'center', 
+                        fontFamily: 'Times New Roman' 
+                    }}>
+                        <Text>Б</Text>
+                    </View>
+
+                    {/* Ячейка номера строки */}
+                    <View style={{ 
+                        flexBasis: cm(0.8), 
+                        fontSize: 10, 
+                        borderBottomWidth: 1, 
+                        borderColor: '#000000', 
+                        borderRightWidth: 1, 
+                        justifyContent: 'center', 
+                        alignItems: 'center', 
+                        fontFamily: 'Times New Roman' 
+                    }}>
+                        <Text>{formatNum(globalLineCount)}</Text>
+                    </View>
+                    
+                    {/* Ячейка НАЗВАНИЯ ИНСТРУМЕНТА / ТЕКСТА ОПЕРАЦИИ */}
+                    <View style={{ 
+                        flexBasis: cm(10.48), 
+                        borderBottomWidth: 1, 
+                        borderColor: '#000000', 
+                        borderRightWidth: 1,
+                        alignItems: 'flex-start', 
+                        justifyContent: 'center', 
+                        paddingLeft: 6, 
+                        paddingRight: 6, // Добавлен отступ
+                        paddingTop: 0,     
+                        paddingBottom: 0, // Увеличен отступ
+                        fontSize: 10, 
+                        fontFamily: 'Times New Roman',
+                        flexGrow: 1,
+                        flexDirection: 'row',
+                        flexWrap: 'wrap' 
+                    }}>
+                        <Text style={{ width: '100%', lineHeight: 0.95 }}>{cleanedToolName}</Text>
+                    </View>
+                    
+                    {/* Идеальная по размерам сетка нормативов справа */}
+                    {[
+                        { flexBasis: cm(1.15) }, { flexBasis: cm(1.44) }, { flexBasis: cm(0.93) },
+                        { flexBasis: cm(1.15) }, { flexBasis: cm(0.93) }, { flexBasis: cm(1.39) },
+                        { flexBasis: cm(1.37) }, { flexBasis: cm(1.01) }, { flexBasis: cm(2.36) },
+                        { flexBasis: cm(2.04) }, { flexBasis: cm(1.4) }
+                    ].map((sizeStyle, idx) => (
+                        <View 
+                            key={idx} 
+                            style={[
+                                rightCellOption, 
+                                sizeStyle, 
+                                { alignSelf: 'stretch', justifyContent: 'center' }
+                            ]}
+                        >
+                            <Text></Text>
+                        </View>
+                    ))}
                 </View>
-
-                {/* Ячейка номера строки */}
-                <View style={{ flexBasis: cm(0.8), fontSize: 10, borderBottomWidth: 1, borderColor: '#000000', borderRightWidth: 1, justifyContent: 'center', alignItems: 'center', fontFamily: 'Times New Roman' }}>
-                    <Text>{formatNum(globalLineCount)}</Text>
-                </View>
-                
-                {/* Ячейка НАЗВАНИЯ ИНСТРУМЕНТА */}
-                <View style={{ 
-                    flexBasis: cm(10.48), 
-                    borderBottomWidth: 1, 
-                    borderColor: '#000000', 
-                    borderRightWidth: 1,
-                    alignItems: 'flex-start', 
-                    justifyContent: 'center', 
-                    paddingLeft: 6, 
-                    paddingTop: 3,     
-                    paddingBottom: 3,  
-                    fontSize: 10, 
-                    fontFamily: 'Times New Roman',
-                    flexGrow: 1,
-                    // ИСПРАВЛЕНО: Убрали flexWrap: 'wrap', который вызывал баг высоты в `@react-pdf`
-                }}>
-                    <Text style={{ width: '100%' }}>{cleanedToolName}</Text>
-                </View>
-                
-                {/* Идеальная по размерам сетка нормативов справа */}
-                <View style={[rightCellOption, { flexBasis: cm(1.15) }]}><Text></Text></View>
-                <View style={[rightCellOption, { flexBasis: cm(1.44) }]}><Text></Text></View>
-                <View style={[rightCellOption, { flexBasis: cm(0.93) }]}><Text></Text></View>
-                <View style={[rightCellOption, { flexBasis: cm(1.15) }]}><Text></Text></View>
-                <View style={[rightCellOption, { flexBasis: cm(0.93) }]}><Text></Text></View>
-                <View style={[rightCellOption, { flexBasis: cm(1.39) }]}><Text></Text></View>
-                <View style={[rightCellOption, { flexBasis: cm(1.37) }]}><Text></Text></View>
-                <View style={[rightCellOption, { flexBasis: cm(1.01) }]}><Text></Text></View>
-                <View style={[rightCellOption, { flexBasis: cm(2.36) }]}><Text></Text></View>
-                <View style={[rightCellOption, { flexBasis: cm(2.04) }]}><Text></Text></View>
-                <View style={[rightCellOption, { flexBasis: cm(1.4) }]}><Text></Text></View>
-            </View>
-            );
-        })}
+              );
+          })
+        }
 
         </React.Fragment>
     );
+
 })}
 
 

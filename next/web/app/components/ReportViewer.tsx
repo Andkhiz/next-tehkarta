@@ -6,13 +6,14 @@ import { GostReportTemplate, RouteCardData } from './GostReportTemplate';
 
 interface ReportViewerProps {
   reportData: RouteCardData;
+  reportType: string;
 }
 
-export default function ReportViewer({ reportData }: ReportViewerProps) {
+export default function ReportViewer({ reportData, reportType }: ReportViewerProps) {
   return (
     <div style={{ width: '100%', height: '85vh', marginTop: '20px' }}>
       <PDFViewer style={{ width: '100%', height: '100%', border: 'none' }}>
-        <GostReportTemplate data={reportData} />
+        <GostReportTemplate data={reportData} reportType={reportType}/>
       </PDFViewer>
     </div>
   );

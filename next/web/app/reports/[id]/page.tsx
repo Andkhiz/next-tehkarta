@@ -6,12 +6,16 @@ import { prisma } from '../../db';
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function ReportsPage({ params }: PageProps) {
+export default async function ReportsPage({ params, searchParams }: PageProps) {
   // 1. Получаем ID из параметров адресной строки
   const resolvedParams = await params;
   const cardId = parseInt(resolvedParams.id, 10);
+  const resolvedSearchParams = await searchParams;
+  const reportType = resolvedSearchParams.type as string | undefined;
+  const isKTP = reportType === 'ktp';
 
   if (isNaN(cardId)) {
     return notFound();
@@ -58,7 +62,7 @@ export default async function ReportsPage({ params }: PageProps) {
         Маршрутная карта № {reportData.documentNumber}
       </h1>
       
-      <ClientReportWrapper reportData={reportData} />
+      <ClientReportWrapper reportData={reportData} reportType={reportType || 'mk'}/>
     </div>
   );
 }

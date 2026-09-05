@@ -12,9 +12,10 @@ const ReportViewer = dynamic(
 
 interface ClientReportWrapperProps {
   reportData: RouteCardData;
+  reportType: string; 
 }
 
 
-export default function ClientReportWrapper({ reportData }: ClientReportWrapperProps) {
-  return <ReportViewer reportData={reportData} />;
+export default function ClientReportWrapper({ reportData, reportType }: ClientReportWrapperProps) {
+  return <ReportViewer reportData={reportData} reportType={reportType}/>;
 }
