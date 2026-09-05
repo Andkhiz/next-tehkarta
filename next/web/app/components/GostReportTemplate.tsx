@@ -79,32 +79,6 @@ const styles = StyleSheet.create({
     margin: 0,
   },
   
- 
-  // Идеальные проценты колонок, подогнанные под сумму 100% в каждой строке
-  w3:  { width: '3%' },
-  w4:  { width: '4%' },
-  w5:  { width: '5%' },
-  w6:  { width: '6%' },
-  w7:  { width: '7%' },
-  w8:  { width: '8%' },
-  w10: { width: '10%' },
-  w11: { width: '11%' },
-  w12: { width: '12%' },
-  w14: { width: '14%' },
-  w15: { width: '15%' },
-  w20: { width: '20%' },
-  w25: { width: '25%' },
-  w30: { width: '30%' },
-  w35: { width: '35%' },
-  w40: { width: '40%' },
-  w45: { width: '45%' },
-  w50: { width: '50%' },
-  w55: { width: '55%' },
-  w60: { width: '60%' },
-  w65: { width: '65%' },
-  w70: { width: '70%' },
-  w75: { width: '75%' },
-
   gostTable: {
     width: '100%',
     padding: 0,
