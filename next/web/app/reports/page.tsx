@@ -43,13 +43,15 @@ export default async function ReportsPage() {
     ]
   };
 
+  const reportType = 'ktp';
+
   return (
     <div style={{ padding: '30px', fontFamily: 'sans-serif' }}>
       <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}>Маршрутные карты техпроцесса</h1>
       <p style={{ color: '#666', fontSize: '14px' }}>Документ сформирован из базы данных PostgreSQL</p>
       
       {/* Передаем данные в клиентскую обертку */}
-      <ClientReportWrapper reportData={sampleData} />
+      <ClientReportWrapper reportData={sampleData} reportType={reportType} />
     </div>
   );
 }
