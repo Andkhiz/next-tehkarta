@@ -79,28 +79,7 @@ const styles = StyleSheet.create({
     margin: 0,
   },
   
-  cell: {
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
-    padding: 2,
-    justifyContent: 'center',
-    height: '100%',
-  },
-  cellCenter: {
-    textAlign: 'center',
-  },
-  textBold: {
-    fontFamily: 'RobotoBold',
-  },
-  
-  // Контейнер ГОСТ шапки — теперь он создает только внешнюю верхнюю и левую рамку
-  gostHeaderContainer: {
-    width: '100%',
-    borderTopWidth: 0,
-    borderLeftWidth: 1,
-    marginBottom: 10,
-  },
-    
+ 
   // Идеальные проценты колонок, подогнанные под сумму 100% в каждой строке
   w3:  { width: '3%' },
   w4:  { width: '4%' },
@@ -126,42 +105,6 @@ const styles = StyleSheet.create({
   w70: { width: '70%' },
   w75: { width: '75%' },
 
-  // Таблица техпроцесса
-  table: {
-    width: '100%',
-    borderLeftWidth: 1,
-    borderTopWidth: 0,
-    borderColor: '#000',
-  },
-  tableHeaderRow: {
-    flexDirection: 'row',
-    backgroundColor: '#f0f0f0',
-    fontFamily: 'RobotoBold',
-  },
-  operationBlock: {},
-  rowA: { 
-    flexDirection: 'row', 
-    minHeight: 14,       // Минимальная высота по ГОСТу
-    alignItems: 'stretch' // Растягивает все ячейки строки до максимальной высоты
-  },
-  rowB: { 
-    flexDirection: 'row', 
-    minHeight: 14, 
-    alignItems: 'stretch' 
-  },
-  colType: { width: '4%', textAlign: 'center', fontFamily: 'RobotoBold' },
-  colNum:  { width: '6%', textAlign: 'center' },
-  colName: { width: '25%' },
-  colText: { width: '45%' },
-  colInfo: { width: '20%' },
-  pageFooter: {
-    position: 'absolute',
-    bottom: 15,
-    right: 20,
-    fontSize: 8,
-    color: '#555',
-  },
-  
   gostTable: {
     width: '100%',
     padding: 0,
@@ -216,9 +159,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     fontFamily: 'Times New Roman',
   },
-  processRow: {
-    flexDirection: 'row',
-  },
+
   processCell: {
     borderRightWidth: 1,
     borderBottomWidth: 1,
